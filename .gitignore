@@ -13,3 +13,7 @@ ios/
 
 # Coverage
 coverage/
+
+# IDE
+.idea/
+.vscode/
