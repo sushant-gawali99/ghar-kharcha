@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "@/lib/auth";
 
 const QUICK_ACTIONS = [
   { id: "upload", label: "Upload Invoices", icon: "↑", accent: false },
@@ -87,6 +88,10 @@ function SectionTitle({
 }
 
 export default function HomeScreen() {
+  const user = useAuthStore((s) => s.user);
+  const firstName = user?.name?.trim().split(/\s+/)[0] ?? "there";
+  const initial = firstName.charAt(0).toUpperCase();
+
   return (
     <SafeAreaView className="flex-1 bg-[#f6f6f9]">
       <ScrollView
@@ -100,14 +105,16 @@ export default function HomeScreen() {
               className="h-11 w-11 items-center justify-center rounded-full"
               style={{ backgroundColor: "#ffc2c6" }}
             >
-              <Text className="text-base font-bold text-[#6e0020]">A</Text>
+              <Text className="text-base font-bold text-[#6e0020]">
+                {initial}
+              </Text>
             </View>
             <View>
               <Text className="text-[10px] font-bold uppercase tracking-[1.8px] text-[#99a1ad]">
                 Welcome Back
               </Text>
               <Text className="mt-0.5 text-[30px] font-extrabold tracking-tight text-[#006a28]">
-                Hello, Arjun
+                Hello, {firstName}
               </Text>
             </View>
           </View>
