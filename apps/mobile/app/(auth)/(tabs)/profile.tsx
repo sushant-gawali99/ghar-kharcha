@@ -260,26 +260,6 @@ export default function ProfileScreen() {
                     {user.email}
                   </Text>
                 )}
-                {/* platform pills */}
-                <View style={{ flexDirection: "row", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
-                  {[
-                    { name: "Zepto", bg: "#4B1B8C", fg: "#F5E9C0" },
-                    { name: "Blinkit", bg: "#F4D00A", fg: "#1A1A1A" },
-                    { name: "Instamart", bg: "#FF5A2D", fg: "#FFF5E0" },
-                  ].map((p) => (
-                    <View key={p.name} style={{
-                      flexDirection: "row", alignItems: "center", gap: 5,
-                      paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999,
-                      backgroundColor: "rgba(243,234,219,0.08)",
-                      borderWidth: 0.5, borderColor: "rgba(243,234,219,0.15)",
-                    }}>
-                      <View style={{ width: 14, height: 14, borderRadius: 999, backgroundColor: p.bg, alignItems: "center", justifyContent: "center" }}>
-                        <Text style={{ fontFamily: FONTS.serifBold, fontSize: 8, color: p.fg }}>{p.name[0]}</Text>
-                      </View>
-                      <Text style={{ fontFamily: FONTS.sans, fontSize: 11, color: "rgba(243,234,219,0.8)" }}>{p.name}</Text>
-                    </View>
-                  ))}
-                </View>
               </View>
             </View>
 
