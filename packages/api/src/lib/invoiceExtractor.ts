@@ -1,5 +1,5 @@
 import type { GroceryCategory, GroceryPlatform } from "./groceryCategories";
-import { GROCERY_CATEGORIES } from "./groceryCategories";
+import { GROCERY_CATEGORIES, GROCERY_PLATFORMS } from "./groceryCategories";
 
 export interface ParsedGroceryItem {
   name: string;
@@ -127,3 +127,38 @@ export const INVOICE_TOOL = {
     },
   },
 };
+
+export type ValidationResult =
+  | { ok: true }
+  | { ok: false; reason: string };
+
+export function validate(order: ParsedGroceryOrder): ValidationResult {
+  if (!order.invoiceNo || order.invoiceNo.trim() === "") {
+    return { ok: false, reason: "invoiceNo is empty" };
+  }
+
+  if (!order.items || order.items.length === 0) {
+    return { ok: false, reason: "items array is empty" };
+  }
+
+  if (!(GROCERY_PLATFORMS as readonly string[]).includes(order.platform)) {
+    return { ok: false, reason: `platform "${order.platform}" is not a known enum value` };
+  }
+
+  const dateMs = Date.parse(order.orderDate);
+  if (Number.isNaN(dateMs)) {
+    return { ok: false, reason: `orderDate "${order.orderDate}" is not a valid date` };
+  }
+
+  const itemsSum = order.items.reduce((sum, item) => sum + item.totalAmount, 0);
+  const expected = itemsSum + order.handlingFee + order.deliveryFee;
+  const delta = Math.abs(expected - order.totalAmount);
+  if (delta > TOTAL_TOLERANCE_RUPEES) {
+    return {
+      ok: false,
+      reason: `totals mismatch: items+fees=${expected.toFixed(2)} vs totalAmount=${order.totalAmount.toFixed(2)} (delta ${delta.toFixed(2)} > \u20b9${TOTAL_TOLERANCE_RUPEES})`,
+    };
+  }
+
+  return { ok: true };
+}
