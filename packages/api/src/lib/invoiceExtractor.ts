@@ -147,9 +147,8 @@ export function validate(order: ParsedGroceryOrder): ValidationResult {
     return { ok: false, reason: `platform "${order.platform}" is not a known enum value` };
   }
 
-  const dateMs = Date.parse(order.orderDate);
-  if (Number.isNaN(dateMs)) {
-    return { ok: false, reason: `orderDate "${order.orderDate}" is not a valid date` };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(order.orderDate) || Number.isNaN(Date.parse(order.orderDate))) {
+    return { ok: false, reason: `orderDate "${order.orderDate}" is not a valid date (expected YYYY-MM-DD)` };
   }
 
   const itemsSum = order.items.reduce((sum, item) => sum + item.totalAmount, 0);
@@ -234,6 +233,16 @@ async function extractStructured(
   return toolUse.input as ParsedGroceryOrder;
 }
 
+const MAX_LOG_REASON_CHARS = 120;
+
+function sanitizeReason(err: unknown): string {
+  if (!(err instanceof Error)) return "sdk_error";
+  const msg = err.message || "sdk_error";
+  return msg.length > MAX_LOG_REASON_CHARS
+    ? msg.slice(0, MAX_LOG_REASON_CHARS) + "…"
+    : msg;
+}
+
 function logExtraction(fields: Record<string, unknown>) {
   console.log(JSON.stringify({ event: "invoice_extraction", ...fields }));
 }
@@ -248,8 +257,13 @@ export async function extractInvoice(
   let text = "";
   try {
     text = await pdfTextFn(pdfBuffer);
-  } catch {
+  } catch (err) {
     text = "";
+    logExtraction({
+      path: "text",
+      skipped: true,
+      reason: `pdf_text_extraction_failed: ${sanitizeReason(err)}`,
+    });
   }
 
   const textPathEligible = text.length >= MIN_TEXT_LENGTH;
@@ -278,7 +292,7 @@ export async function extractInvoice(
         path: "text",
         durationMs: Date.now() - start,
         validationOk: false,
-        reason: err instanceof Error ? err.message : "sdk_error",
+        reason: sanitizeReason(err),
       });
     }
   }
@@ -312,7 +326,7 @@ export async function extractInvoice(
       path: "pdf",
       durationMs: Date.now() - start,
       validationOk: false,
-      reason: err instanceof Error ? err.message : "sdk_error",
+      reason: sanitizeReason(err),
     });
     throw new InvoiceExtractionError(
       "both",

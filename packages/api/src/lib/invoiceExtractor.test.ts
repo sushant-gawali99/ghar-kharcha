@@ -75,6 +75,12 @@ describe("validate", () => {
     if (!result.ok) expect(result.reason).toMatch(/platform/i);
   });
 
+  it("rejects year-only orderDate (not YYYY-MM-DD)", () => {
+    const result = validate(makeOrder({ orderDate: "2026" }));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/YYYY-MM-DD/);
+  });
+
   it("handles handlingFee and deliveryFee in reconciliation", () => {
     const result = validate(
       makeOrder({
