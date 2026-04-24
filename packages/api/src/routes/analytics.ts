@@ -342,8 +342,8 @@ analytics.get("/grocery/compare", async (c) => {
   const endMonthStart = buildUtcMonthDate(endYear, endMonth);
   const category = (c.req.query("category") ?? "").trim();
 
-  const monthStarts = Array.from({ length: 4 }, (_, index) =>
-    shiftUtcMonth(endMonthStart, index - 3)
+  const monthStarts = Array.from({ length: 6 }, (_, index) =>
+    shiftUtcMonth(endMonthStart, index - 5)
   );
 
   const months = await Promise.all(
