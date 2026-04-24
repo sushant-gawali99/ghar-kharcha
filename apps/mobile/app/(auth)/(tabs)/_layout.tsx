@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { T } from "@/lib/theme";
 
 function TabIcon({ name, color }: { name: keyof typeof Feather.glyphMap; color: string }) {
@@ -10,7 +11,7 @@ function TabIcon({ name, color }: { name: keyof typeof Feather.glyphMap; color: 
 function UploadFAB({ focused }: { focused: boolean }) {
   return (
     <View style={{
-      width: 52, height: 52, borderRadius: 999,
+      width: 48, height: 48, borderRadius: 999,
       backgroundColor: T.terracotta,
       alignItems: "center", justifyContent: "center",
       borderWidth: focused ? 2 : 0,
@@ -20,7 +21,6 @@ function UploadFAB({ focused }: { focused: boolean }) {
       shadowRadius: 14,
       shadowOffset: { width: 0, height: 8 },
       elevation: 12,
-      marginBottom: 4,
     }}>
       <View style={{
         width: 16, height: 1.8, backgroundColor: "#FBF5E8",
@@ -35,6 +35,7 @@ function UploadFAB({ focused }: { focused: boolean }) {
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   const activeColor = T.haldi;
   const inactiveColor = "rgba(243,234,219,0.5)";
 
@@ -46,13 +47,13 @@ export default function TabsLayout() {
           position: "absolute",
           left: 18,
           right: 18,
-          bottom: 34,
-          height: 64,
+          bottom: insets.bottom + 16,
+          height: 78,
           borderTopWidth: 0,
-          borderRadius: 32,
+          borderRadius: 36,
           backgroundColor: T.ink,
-          paddingTop: 10,
-          paddingBottom: 10,
+          paddingTop: 14,
+          paddingBottom: 14,
           shadowColor: T.ink,
           shadowOpacity: 0.28,
           shadowRadius: 40,
