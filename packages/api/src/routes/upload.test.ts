@@ -4,8 +4,9 @@ import { db } from "../db/index";
 import { uploads, orders, orderItems, users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import type { ParsedGroceryOrder } from "../lib/invoiceExtractor";
 
-const FAKE_ORDER = {
+const FAKE_ORDER: ParsedGroceryOrder = {
   platform: "zepto",
   orderDate: "2026-04-20",
   invoiceNo: "INV-TEST-001",
@@ -75,7 +76,8 @@ function makePdfBuffer(): Buffer {
 
 function makeFormData(buffer: Buffer): FormData {
   const fd = new FormData();
-  fd.append("file", new File([buffer], "invoice.pdf", { type: "application/pdf" }));
+  const blob = new Blob([new Uint8Array(buffer)], { type: "application/pdf" });
+  fd.append("file", new File([blob], "invoice.pdf", { type: "application/pdf" }));
   return fd;
 }
 
