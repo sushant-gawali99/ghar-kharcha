@@ -21,15 +21,21 @@ services:
       context: .
       dockerfile: packages/api/Dockerfile
     restart: unless-stopped
+    env_file:
+      - packages/api/.env
     environment:
       DATABASE_URL: postgresql://ghar:ghar@db:5432/ghar_kharcha
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      UPLOAD_DIR: /data/uploads
       PORT: 3000
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
     ports:
       - "3000:3000"
+    volumes:
+      - upload_data:/data/uploads
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  upload_data:
