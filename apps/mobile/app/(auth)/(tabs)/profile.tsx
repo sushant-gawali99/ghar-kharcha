@@ -303,17 +303,20 @@ export default function ProfileScreen() {
         </SettingsGroup>
 
         {/* ── Sign out ── */}
-        <View style={{ paddingHorizontal: 22, marginTop: 24 }}>
+        <View style={{ paddingHorizontal: 22, marginTop: 28 }}>
           <Pressable
             onPress={handleLogout}
-            style={({ pressed }) => [{
-              alignItems: "center", paddingVertical: 14, borderRadius: 14,
-              backgroundColor: "rgba(200,92,60,0.1)",
-              borderWidth: 0.5, borderColor: "rgba(200,92,60,0.2)",
-              opacity: pressed ? 0.75 : 1,
-            }]}
+            style={{
+              alignItems: "center", paddingVertical: 20, borderRadius: 20,
+              backgroundColor: T.terracotta,
+              shadowColor: T.terracotta,
+              shadowOpacity: 0.28,
+              shadowRadius: 18,
+              shadowOffset: { width: 0, height: 10 },
+              elevation: 8,
+            }}
           >
-            <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 14, color: T.terracotta }}>Sign out</Text>
+            <Text style={{ fontFamily: FONTS.sansSemiBold, fontSize: 16, color: T.paper, letterSpacing: 0.3 }}>Sign out</Text>
           </Pressable>
           <Text style={{ fontFamily: FONTS.serifItalic, fontSize: 12, color: T.ink3, textAlign: "center", marginTop: 18 }}>
             Ghar Kharcha · made with ghee
