@@ -1,3 +1,5 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { extractPdfText } from "./pdfText";
 import type { GroceryCategory, GroceryPlatform } from "./groceryCategories";
 import { GROCERY_CATEGORIES, GROCERY_PLATFORMS } from "./groceryCategories";
 
@@ -161,4 +163,161 @@ export function validate(order: ParsedGroceryOrder): ValidationResult {
   }
 
   return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Orchestration: extractStructured + extractInvoice
+// ---------------------------------------------------------------------------
+
+interface AnthropicLike {
+  messages: {
+    create: (args: unknown) => Promise<{
+      content: Array<{ type: string; name?: string; input?: unknown; text?: string }>;
+      usage?: {
+        input_tokens?: number;
+        output_tokens?: number;
+        cache_read_input_tokens?: number;
+      };
+    }>;
+  };
+}
+
+export interface ExtractInvoiceDeps {
+  client?: AnthropicLike;
+  pdfText?: (buffer: Buffer) => Promise<string>;
+}
+
+let sharedClient: AnthropicLike | null = null;
+function getDefaultClient(): AnthropicLike {
+  if (!sharedClient) {
+    sharedClient = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as unknown as AnthropicLike;
+  }
+  return sharedClient;
+}
+
+type ExtractInput =
+  | { kind: "text"; text: string }
+  | { kind: "pdf"; base64: string };
+
+async function extractStructured(
+  client: AnthropicLike,
+  input: ExtractInput,
+  model: string,
+): Promise<ParsedGroceryOrder | null> {
+  const userContent =
+    input.kind === "text"
+      ? [{ type: "text", text: input.text }]
+      : [
+          {
+            type: "document",
+            source: {
+              type: "base64",
+              media_type: "application/pdf",
+              data: input.base64,
+            },
+          },
+        ];
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: MAX_OUTPUT_TOKENS,
+    system: [
+      { type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } },
+    ],
+    tools: [INVOICE_TOOL],
+    tool_choice: { type: "tool", name: "record_invoice" },
+    messages: [{ role: "user", content: userContent }],
+  });
+
+  const toolUse = response.content.find((block) => block.type === "tool_use");
+  if (!toolUse || !toolUse.input) return null;
+  return toolUse.input as ParsedGroceryOrder;
+}
+
+function logExtraction(fields: Record<string, unknown>) {
+  console.log(JSON.stringify({ event: "invoice_extraction", ...fields }));
+}
+
+export async function extractInvoice(
+  pdfBuffer: Buffer,
+  deps: ExtractInvoiceDeps = {},
+): Promise<ParsedGroceryOrder> {
+  const client = deps.client ?? getDefaultClient();
+  const pdfTextFn = deps.pdfText ?? extractPdfText;
+
+  let text = "";
+  try {
+    text = await pdfTextFn(pdfBuffer);
+  } catch {
+    text = "";
+  }
+
+  const textPathEligible = text.length >= MIN_TEXT_LENGTH;
+  let textRaw: unknown = null;
+
+  if (textPathEligible) {
+    const start = Date.now();
+    try {
+      const parsed = await extractStructured(client, { kind: "text", text }, HAIKU_MODEL);
+      textRaw = parsed;
+      if (parsed) {
+        const v = validate(parsed);
+        logExtraction({
+          model: HAIKU_MODEL,
+          path: "text",
+          durationMs: Date.now() - start,
+          validationOk: v.ok,
+        });
+        if (v.ok) return parsed;
+      } else {
+        logExtraction({ model: HAIKU_MODEL, path: "text", durationMs: Date.now() - start, validationOk: false, reason: "no_tool_use" });
+      }
+    } catch (err) {
+      logExtraction({
+        model: HAIKU_MODEL,
+        path: "text",
+        durationMs: Date.now() - start,
+        validationOk: false,
+        reason: err instanceof Error ? err.message : "sdk_error",
+      });
+    }
+  }
+
+  const start = Date.now();
+  let pdfRaw: unknown = null;
+  try {
+    const parsed = await extractStructured(
+      client,
+      { kind: "pdf", base64: pdfBuffer.toString("base64") },
+      SONNET_MODEL,
+    );
+    pdfRaw = parsed;
+    if (!parsed) {
+      logExtraction({ model: SONNET_MODEL, path: "pdf", durationMs: Date.now() - start, validationOk: false, reason: "no_tool_use" });
+      throw new InvoiceExtractionError("both", "no tool_use on PDF path", { textRaw, pdfRaw });
+    }
+    const v = validate(parsed);
+    logExtraction({
+      model: SONNET_MODEL,
+      path: "pdf",
+      durationMs: Date.now() - start,
+      validationOk: v.ok,
+    });
+    if (v.ok) return parsed;
+    throw new InvoiceExtractionError("both", v.reason, { textRaw, pdfRaw });
+  } catch (err) {
+    if (err instanceof InvoiceExtractionError) throw err;
+    logExtraction({
+      model: SONNET_MODEL,
+      path: "pdf",
+      durationMs: Date.now() - start,
+      validationOk: false,
+      reason: err instanceof Error ? err.message : "sdk_error",
+    });
+    throw new InvoiceExtractionError(
+      "both",
+      err instanceof Error ? err.message : "SDK error on PDF path",
+      { textRaw, pdfRaw },
+    );
+  }
 }
