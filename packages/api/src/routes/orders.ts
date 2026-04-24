@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { and, asc, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db } from "../db/index";
 import { orders as ordersTable, orderItems } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
+import { getHouseholdMemberIds } from "../lib/household";
 
 const orders = new Hono<{ Variables: AuthVariables }>();
 
@@ -45,6 +46,7 @@ orders.get(
   ),
   async (c) => {
     const userId = c.get("userId");
+    const memberIds = await getHouseholdMemberIds(userId);
     const { month, platform } = c.req.valid("query");
 
     const now = new Date();
@@ -57,7 +59,7 @@ orders.get(
     lastWeekStart.setUTCDate(lastWeekStart.getUTCDate() - 7);
 
     const whereCond = and(
-      eq(ordersTable.userId, userId),
+      inArray(ordersTable.userId, memberIds),
       gte(ordersTable.orderedAt, monthStart),
       lt(ordersTable.orderedAt, monthEnd),
       platform ? eq(ordersTable.platform, platform) : undefined,
@@ -165,6 +167,7 @@ orders.get(
 
 orders.get("/:id", async (c) => {
   const userId = c.get("userId");
+  const memberIds = await getHouseholdMemberIds(userId);
   const id = c.req.param("id");
 
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
@@ -172,7 +175,7 @@ orders.get("/:id", async (c) => {
   }
 
   const order = await db.query.orders.findFirst({
-    where: and(eq(ordersTable.id, id), eq(ordersTable.userId, userId)),
+    where: and(eq(ordersTable.id, id), inArray(ordersTable.userId, memberIds)),
   });
 
   if (!order) {

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { OAuth2Client } from "google-auth-library";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index";
-import { users, refreshTokens } from "../db/schema";
+import { users, refreshTokens, households } from "../db/schema";
 import {
   signAccessToken,
   generateRefreshToken,
@@ -58,6 +58,13 @@ auth.post(
         },
       })
       .returning();
+
+    // New user (or pre-household backfill) without a household → create one.
+    if (!user.householdId) {
+      const [household] = await db.insert(households).values({}).returning();
+      await db.update(users).set({ householdId: household.id }).where(eq(users.id, user.id));
+      user.householdId = household.id;
+    }
 
     // Issue tokens
     const accessToken = await signAccessToken(user.id);

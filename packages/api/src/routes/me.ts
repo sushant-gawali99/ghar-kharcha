@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "../db/index";
-import { users, orders, orderItems } from "../db/schema";
+import { users, orders, orderItems, households } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
+import { getHouseholdId, getHouseholdMemberIds } from "../lib/household";
 
 const me = new Hono<{ Variables: AuthVariables }>();
 
@@ -15,29 +16,35 @@ me.get("/", async (c) => {
   const row = await db.query.users.findFirst({ where: eq(users.id, userId) });
   if (!row) return c.json({ error: "User not found" }, 404);
 
+  let monthlyBudget: number | null = null;
+  if (row.householdId) {
+    const [hh] = await db
+      .select({ monthlyBudget: households.monthlyBudget })
+      .from(households)
+      .where(eq(households.id, row.householdId))
+      .limit(1);
+    monthlyBudget = hh?.monthlyBudget !== null && hh?.monthlyBudget !== undefined ? Number(hh.monthlyBudget) : null;
+  }
+
+  const memberIds = await getHouseholdMemberIds(userId);
+
   const [totals] = await db
-    .select({
-      totalInvoices: sql<string>`count(*)::text`,
-    })
+    .select({ totalInvoices: sql<string>`count(*)::text` })
     .from(orders)
-    .where(eq(orders.userId, userId));
+    .where(inArray(orders.userId, memberIds));
 
   const [itemsAgg] = await db
-    .select({
-      totalItems: sql<string>`coalesce(count(${orderItems.id}), 0)::text`,
-    })
+    .select({ totalItems: sql<string>`coalesce(count(${orderItems.id}), 0)::text` })
     .from(orderItems)
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
-    .where(eq(orders.userId, userId));
+    .where(inArray(orders.userId, memberIds));
 
   const [monthAgg] = await db
-    .select({
-      monthSpend: sql<string>`coalesce(sum(${orders.total}), 0)::text`,
-    })
+    .select({ monthSpend: sql<string>`coalesce(sum(${orders.total}), 0)::text` })
     .from(orders)
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         sql`date_trunc('month', ${orders.orderedAt}) = date_trunc('month', now())`,
       ),
     );
@@ -47,7 +54,8 @@ me.get("/", async (c) => {
     email: row.email,
     name: row.name,
     avatarUrl: row.avatarUrl,
-    monthlyBudget: row.monthlyBudget !== null ? Number(row.monthlyBudget) : null,
+    householdId: row.householdId,
+    monthlyBudget,
     stats: {
       totalInvoices: Number(totals?.totalInvoices ?? 0),
       totalItems: Number(itemsAgg?.totalItems ?? 0),
@@ -71,33 +79,46 @@ me.patch(
     const userId = c.get("userId");
     const body = c.req.valid("json");
 
-    const updates: { monthlyBudget?: string | null; name?: string; updatedAt?: Date } = {};
-    if (body.monthlyBudget !== undefined) {
-      updates.monthlyBudget = body.monthlyBudget === null ? null : body.monthlyBudget.toFixed(2);
-    }
     if (body.name !== undefined) {
-      updates.name = body.name;
+      await db
+        .update(users)
+        .set({ name: body.name, updatedAt: new Date() })
+        .where(eq(users.id, userId));
     }
 
-    if (Object.keys(updates).length === 0) {
-      return c.json({ error: "No fields to update" }, 400);
+    if (body.monthlyBudget !== undefined) {
+      const householdId = await getHouseholdId(userId);
+      if (!householdId) {
+        return c.json({ error: "User has no household" }, 400);
+      }
+      await db
+        .update(households)
+        .set({
+          monthlyBudget: body.monthlyBudget === null ? null : body.monthlyBudget.toFixed(2),
+        })
+        .where(eq(households.id, householdId));
     }
-    updates.updatedAt = new Date();
 
-    const [row] = await db
-      .update(users)
-      .set(updates)
-      .where(eq(users.id, userId))
-      .returning();
-
+    const row = await db.query.users.findFirst({ where: eq(users.id, userId) });
     if (!row) return c.json({ error: "User not found" }, 404);
+
+    let monthlyBudget: number | null = null;
+    if (row.householdId) {
+      const [hh] = await db
+        .select({ monthlyBudget: households.monthlyBudget })
+        .from(households)
+        .where(eq(households.id, row.householdId))
+        .limit(1);
+      monthlyBudget = hh?.monthlyBudget !== null && hh?.monthlyBudget !== undefined ? Number(hh.monthlyBudget) : null;
+    }
 
     return c.json({
       id: row.id,
       email: row.email,
       name: row.name,
       avatarUrl: row.avatarUrl,
-      monthlyBudget: row.monthlyBudget !== null ? Number(row.monthlyBudget) : null,
+      householdId: row.householdId,
+      monthlyBudget,
     });
   },
 );

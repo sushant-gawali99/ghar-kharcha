@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db } from "../db/index";
-import { orders, orderItems, users } from "../db/schema";
+import { orders, orderItems, users, households } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
+import { getHouseholdMemberIds } from "../lib/household";
 
 const analytics = new Hono<{ Variables: AuthVariables }>();
 
@@ -34,6 +35,7 @@ function shiftUtcMonth(base: Date, deltaMonths: number): Date {
 
 analytics.get("/home", async (c) => {
   const userId = c.get("userId");
+  const memberIds = await getHouseholdMemberIds(userId);
 
   // Total spent in the current calendar month (server time, UTC).
   const monthSpendRow = await db
@@ -44,7 +46,7 @@ analytics.get("/home", async (c) => {
     .from(orders)
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         sql`date_trunc('month', ${orders.orderedAt}) = date_trunc('month', now())`
       )
     );
@@ -62,7 +64,7 @@ analytics.get("/home", async (c) => {
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         sql`date_trunc('month', ${orders.orderedAt}) = date_trunc('month', now())`
       )
     )
@@ -87,7 +89,7 @@ analytics.get("/home", async (c) => {
     })
     .from(orders)
     .leftJoin(orderItems, eq(orderItems.orderId, orders.id))
-    .where(eq(orders.userId, userId))
+    .where(inArray(orders.userId, memberIds))
     .groupBy(orders.id)
     .orderBy(desc(orders.orderedAt))
     .limit(5);
@@ -147,8 +149,15 @@ analytics.get("/home", async (c) => {
   });
 
   const userRow = await db.query.users.findFirst({ where: eq(users.id, userId) });
-  const monthlyBudget =
-    userRow && userRow.monthlyBudget !== null ? Number(userRow.monthlyBudget) : null;
+  let monthlyBudget: number | null = null;
+  if (userRow?.householdId) {
+    const [hh] = await db
+      .select({ monthlyBudget: households.monthlyBudget })
+      .from(households)
+      .where(eq(households.id, userRow.householdId))
+      .limit(1);
+    monthlyBudget = hh?.monthlyBudget !== null && hh?.monthlyBudget !== undefined ? Number(hh.monthlyBudget) : null;
+  }
 
   return c.json({
     monthSpend,
@@ -161,6 +170,7 @@ analytics.get("/home", async (c) => {
 
 analytics.get("/grocery/month", async (c) => {
   const userId = c.get("userId");
+  const memberIds = await getHouseholdMemberIds(userId);
 
   const parsed = parseMonthQuery(c.req.query("month"));
   if (c.req.query("month") != null && c.req.query("month") !== "" && !parsed) {
@@ -184,7 +194,7 @@ analytics.get("/grocery/month", async (c) => {
     .from(orders)
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         gte(orders.orderedAt, monthStart),
         lt(orders.orderedAt, monthEnd)
       )
@@ -202,7 +212,7 @@ analytics.get("/grocery/month", async (c) => {
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         gte(orders.orderedAt, monthStart),
         lt(orders.orderedAt, monthEnd)
       )
@@ -246,6 +256,7 @@ analytics.get("/grocery/month", async (c) => {
 
 analytics.get("/grocery/category/items", async (c) => {
   const userId = c.get("userId");
+  const memberIds = await getHouseholdMemberIds(userId);
 
   const category = (c.req.query("category") ?? "").trim();
   if (!category) {
@@ -282,7 +293,7 @@ analytics.get("/grocery/category/items", async (c) => {
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         eq(orderItems.category, category),
         gte(orders.orderedAt, monthStart),
         lt(orders.orderedAt, monthEnd)
@@ -303,7 +314,7 @@ analytics.get("/grocery/category/items", async (c) => {
     .innerJoin(orders, eq(orderItems.orderId, orders.id))
     .where(
       and(
-        eq(orders.userId, userId),
+        inArray(orders.userId, memberIds),
         eq(orderItems.category, category),
         gte(orders.orderedAt, monthStart),
         lt(orders.orderedAt, monthEnd)
@@ -334,6 +345,7 @@ analytics.get("/grocery/category/items", async (c) => {
 
 analytics.get("/grocery/compare", async (c) => {
   const userId = c.get("userId");
+  const memberIds = await getHouseholdMemberIds(userId);
 
   const parsed = parseMonthQuery(c.req.query("month"));
   if (c.req.query("month") != null && c.req.query("month") !== "" && !parsed) {
@@ -363,7 +375,7 @@ analytics.get("/grocery/compare", async (c) => {
           .innerJoin(orders, eq(orderItems.orderId, orders.id))
           .where(
             and(
-              eq(orders.userId, userId),
+              inArray(orders.userId, memberIds),
               eq(orderItems.category, category),
               gte(orders.orderedAt, monthStart),
               lt(orders.orderedAt, monthEnd)
@@ -394,7 +406,7 @@ analytics.get("/grocery/compare", async (c) => {
         .from(orders)
         .where(
           and(
-            eq(orders.userId, userId),
+            inArray(orders.userId, memberIds),
             gte(orders.orderedAt, monthStart),
             lt(orders.orderedAt, monthEnd)
           )

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { mkdir, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -7,6 +7,7 @@ import { db } from "../db/index";
 import { uploads, orders, orderItems } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
 import { extractInvoice, InvoiceExtractionError } from "../lib/invoiceExtractor";
+import { getHouseholdMemberIds } from "../lib/household";
 
 const upload = new Hono<{ Variables: AuthVariables }>();
 
@@ -94,9 +95,10 @@ upload.post("/", async (c) => {
     );
   }
 
-  // Duplicate check on (userId, invoiceNo)
+  // Duplicate check across any household member (household-scoped ledger).
+  const memberIds = await getHouseholdMemberIds(userId);
   const existingOrder = await db.query.orders.findFirst({
-    where: and(eq(orders.userId, userId), eq(orders.invoiceNo, parsed.invoiceNo)),
+    where: and(inArray(orders.userId, memberIds), eq(orders.invoiceNo, parsed.invoiceNo)),
   });
 
   if (existingOrder) {

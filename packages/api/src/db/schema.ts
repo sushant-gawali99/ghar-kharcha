@@ -23,15 +23,40 @@ export const platformEnum = pgEnum("platform", [
   "other",
 ]);
 
+export const households = pgTable("households", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  monthlyBudget: numeric("monthly_budget", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
   avatarUrl: text("avatar_url"),
   googleId: text("google_id").unique(),
-  monthlyBudget: numeric("monthly_budget", { precision: 10, scale: 2 }),
+  householdId: uuid("household_id").references(() => households.id, {
+    onDelete: "set null",
+  }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const householdInvites = pgTable("household_invites", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  householdId: uuid("household_id")
+    .notNull()
+    .references(() => households.id, { onDelete: "cascade" }),
+  inviterId: uuid("inviter_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  code: text("code").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  acceptedByUserId: uuid("accepted_by_user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const refreshTokens = pgTable("refresh_tokens", {

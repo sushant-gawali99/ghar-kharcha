@@ -15,6 +15,13 @@
       "when": 1777038242408,
       "tag": "0001_lowly_the_liberteens",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1777043000000,
+      "tag": "0002_household_scope",
+      "breakpoints": true
     }
   ]
 }
