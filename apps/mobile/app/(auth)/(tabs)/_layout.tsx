@@ -1,36 +1,43 @@
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { View } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { T } from "@/lib/theme";
 
-function TabGlyph({
-  focused,
-  glyph,
-}: {
-  focused: boolean;
-  glyph: string;
-}) {
+function TabIcon({ name, color }: { name: keyof typeof Feather.glyphMap; color: string }) {
+  return <Feather name={name} size={22} color={color} />;
+}
+
+function UploadFAB({ focused }: { focused: boolean }) {
   return (
-    <View
-      className="items-center justify-center rounded-full"
-      style={{
-        width: 28,
-        height: 28,
-        backgroundColor: focused ? "#56fe7c" : "transparent",
-      }}
-    >
-      <Text
-        style={{
-          fontSize: 16,
-          fontWeight: focused ? "800" : "700",
-          color: focused ? "#006a28" : "#9ca3af",
-        }}
-      >
-        {glyph}
-      </Text>
+    <View style={{
+      width: 52, height: 52, borderRadius: 999,
+      backgroundColor: T.terracotta,
+      alignItems: "center", justifyContent: "center",
+      borderWidth: focused ? 2 : 0,
+      borderColor: "rgba(251,245,232,0.85)",
+      shadowColor: T.terracotta,
+      shadowOpacity: 0.55,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: 8 },
+      elevation: 12,
+      marginBottom: 4,
+    }}>
+      <View style={{
+        width: 16, height: 1.8, backgroundColor: "#FBF5E8",
+        borderRadius: 2, position: "absolute",
+      }} />
+      <View style={{
+        width: 1.8, height: 16, backgroundColor: "#FBF5E8",
+        borderRadius: 2, position: "absolute",
+      }} />
     </View>
   );
 }
 
 export default function TabsLayout() {
+  const activeColor = T.haldi;
+  const inactiveColor = "rgba(243,234,219,0.5)";
+
   return (
     <Tabs
       screenOptions={{
@@ -39,27 +46,27 @@ export default function TabsLayout() {
           position: "absolute",
           left: 14,
           right: 14,
-          bottom: 12,
-          height: 74,
+          bottom: 18,
+          height: 68,
           borderTopWidth: 0,
           borderRadius: 28,
-          backgroundColor: "#ffffff",
-          paddingTop: 10,
+          backgroundColor: T.ink,
+          paddingTop: 8,
           paddingBottom: 10,
-          shadowColor: "#2d2f31",
-          shadowOpacity: 0.08,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 12 },
-          elevation: 10,
+          shadowColor: T.ink,
+          shadowOpacity: 0.22,
+          shadowRadius: 40,
+          shadowOffset: { width: 0, height: 18 },
+          elevation: 12,
         },
-        tabBarActiveTintColor: "#006a28",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: activeColor,
+        tabBarInactiveTintColor: inactiveColor,
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "800",
+          fontFamily: "Inter_500Medium",
+          fontSize: 9.5,
+          letterSpacing: 0.5,
           textTransform: "uppercase",
-          letterSpacing: 0.6,
-          marginTop: 4,
+          marginTop: 2,
         },
         tabBarItemStyle: {
           paddingVertical: 2,
@@ -70,34 +77,36 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: "Home",
-          tabBarIcon: ({ focused }) => <TabGlyph focused={focused} glyph="⌂" />,
+          tabBarIcon: ({ focused }) => <TabIcon name="home" color={focused ? activeColor : inactiveColor} />,
         }}
       />
       <Tabs.Screen
         name="insights"
         options={{
-          title: "Analytics",
-          tabBarIcon: ({ focused }) => <TabGlyph focused={focused} glyph="⌁" />,
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: "History",
-          tabBarIcon: ({ focused }) => <TabGlyph focused={focused} glyph="▤" />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ focused }) => <TabGlyph focused={focused} glyph="⚙" />,
+          title: "Insights",
+          tabBarIcon: ({ focused }) => <TabIcon name="bar-chart-2" color={focused ? activeColor : inactiveColor} />,
         }}
       />
       <Tabs.Screen
         name="upload"
         options={{
-          href: null,
+          title: "",
+          tabBarIcon: ({ focused }) => <UploadFAB focused={focused} />,
+          tabBarLabel: () => null,
+        }}
+      />
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: "Orders",
+          tabBarIcon: ({ focused }) => <TabIcon name="file-text" color={focused ? activeColor : inactiveColor} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ focused }) => <TabIcon name="user" color={focused ? activeColor : inactiveColor} />,
         }}
       />
     </Tabs>
