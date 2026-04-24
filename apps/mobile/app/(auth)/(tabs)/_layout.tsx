@@ -62,6 +62,8 @@ export default function TabsLayout() {
         },
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
+        tabBarActiveBackgroundColor: "transparent",
+        tabBarInactiveBackgroundColor: "transparent",
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
           fontSize: 9.5,
@@ -70,7 +72,9 @@ export default function TabsLayout() {
           marginTop: 2,
         },
         tabBarItemStyle: {
+          paddingHorizontal: 0,
           paddingVertical: 2,
+          justifyContent: "center",
         },
       }}
     >
