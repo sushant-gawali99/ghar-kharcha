@@ -6,8 +6,7 @@ import path from "node:path";
 import { db } from "../db/index";
 import { uploads, orders, orderItems } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
-import { extractPdfText } from "../lib/pdfText";
-import { parseGroceryInvoice } from "../lib/groceryInvoiceParser";
+import { extractInvoice, InvoiceExtractionError } from "../lib/invoiceExtractor";
 
 const upload = new Hono<{ Variables: AuthVariables }>();
 
@@ -63,14 +62,17 @@ upload.post("/", async (c) => {
     })
     .returning();
 
-  // Extract text + parse
+  // Extract structured invoice via Claude API.
   let parsed;
   try {
-    const text = await extractPdfText(buffer);
-    parsed = parseGroceryInvoice(text);
+    parsed = await extractInvoice(buffer);
   } catch (err) {
     const message =
-      err instanceof Error ? err.message : "Failed to parse invoice";
+      err instanceof InvoiceExtractionError
+        ? err.reason
+        : err instanceof Error
+          ? err.message
+          : "Failed to parse invoice";
     await db
       .update(uploads)
       .set({ status: "failed", errorMessage: message })
