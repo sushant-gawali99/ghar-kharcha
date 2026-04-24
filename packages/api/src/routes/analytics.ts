@@ -275,6 +275,7 @@ analytics.get("/grocery/category/items", async (c) => {
     .select({
       distinctItemCount: sql<string>`count(distinct ${orderItems.name})::text`,
       totalOrdersWithCategory: sql<string>`count(distinct ${orderItems.orderId})::text`,
+      totalUnits: sql<string>`coalesce(sum(${orderItems.quantity}), 0)::text`,
       totalValue: sql<string>`coalesce(sum(${orderItems.totalAmount}), 0)::text`,
     })
     .from(orderItems)
@@ -294,6 +295,7 @@ analytics.get("/grocery/category/items", async (c) => {
     .select({
       name: orderItems.name,
       timesOrdered: sql<string>`count(distinct ${orderItems.orderId})::text`,
+      units: sql<string>`coalesce(sum(${orderItems.quantity}), 0)::text`,
       mrp: sql<string>`coalesce(max(${orderItems.mrp}), 0)::text`,
       totalCost: sql<string>`coalesce(sum(${orderItems.totalAmount}), 0)::text`,
     })
@@ -313,6 +315,7 @@ analytics.get("/grocery/category/items", async (c) => {
   const items = itemRows.map((r) => ({
     name: r.name,
     timesOrdered: Number(r.timesOrdered ?? 0),
+    units: Number(r.units ?? 0),
     mrp: Number(r.mrp ?? 0),
     totalCost: Number(r.totalCost ?? 0),
   }));
@@ -323,6 +326,7 @@ analytics.get("/grocery/category/items", async (c) => {
     category,
     distinctItemCount: Number(summary?.distinctItemCount ?? 0),
     totalOrdersWithCategory: Number(summary?.totalOrdersWithCategory ?? 0),
+    totalUnits: Number(summary?.totalUnits ?? 0),
     totalValue: Number(summary?.totalValue ?? 0),
     items,
   });
