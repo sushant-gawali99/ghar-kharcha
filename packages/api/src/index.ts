@@ -7,6 +7,7 @@ import { auth } from "./routes/auth";
 import { upload } from "./routes/upload";
 import { orders } from "./routes/orders";
 import { analytics } from "./routes/analytics";
+import { me } from "./routes/me";
 
 const app = new Hono();
 
@@ -19,6 +20,7 @@ app.route("/api/auth", auth);
 app.route("/api/upload", upload);
 app.route("/api/orders", orders);
 app.route("/api/analytics", analytics);
+app.route("/api/me", me);
 
 app.onError((err, c) => {
   console.error(err);

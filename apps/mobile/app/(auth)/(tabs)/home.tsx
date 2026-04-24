@@ -23,6 +23,7 @@ const PLATFORM_CONFIG: Record<string, { bg: string; fg: string; glyph: string; l
 type HomeData = {
   monthSpend: number;
   monthOrderCount: number;
+  monthlyBudget: number | null;
   topCategories: { category: string; total: number }[];
   recentOrders: {
     id: string;
@@ -160,12 +161,65 @@ export default function HomeScreen() {
             )}
           </View>
 
-          {data && data.monthOrderCount > 0 && (
+          {data && data.monthlyBudget !== null && data.monthlyBudget > 0 ? (
+            (() => {
+              const budget = data.monthlyBudget;
+              const spent = monthSpend;
+              const pctRaw = budget > 0 ? (spent / budget) * 100 : 0;
+              const pct = Math.max(0, Math.min(100, pctRaw));
+              const remaining = Math.max(0, budget - spent);
+              const overspent = spent > budget;
+              const fillColor = overspent ? T.terracotta : T.haldi;
+              return (
+                <View>
+                  <Text style={{ fontFamily: FONTS.sans, fontSize: 14, color: T.ink2, marginBottom: 14 }}>
+                    of{" "}
+                    <Text style={{ fontFamily: FONTS.serifItalic }}>
+                      ₹{Math.round(budget).toLocaleString("en-IN")}
+                    </Text>{" "}
+                    budget
+                  </Text>
+                  <View
+                    style={{
+                      height: 8,
+                      borderRadius: 999,
+                      backgroundColor: "rgba(31,26,21,0.08)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <View
+                      style={{
+                        height: "100%",
+                        width: `${pct}%`,
+                        backgroundColor: fillColor,
+                        borderRadius: 999,
+                      }}
+                    />
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      marginTop: 10,
+                    }}
+                  >
+                    <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 11, letterSpacing: 1.1, color: T.ink3, textTransform: "uppercase" }}>
+                      {Math.round(pct)}% spent
+                    </Text>
+                    <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 11, letterSpacing: 1.1, color: T.ink3, textTransform: "uppercase" }}>
+                      {overspent ? `₹${Math.round(spent - budget).toLocaleString("en-IN")} over` : `₹${Math.round(remaining).toLocaleString("en-IN")} left`}
+                      {daysLeft > 0 ? ` · ${daysLeft} days` : ""}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })()
+          ) : data && data.monthOrderCount > 0 ? (
             <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: T.ink2, marginBottom: 4 }}>
               {data.monthOrderCount} {data.monthOrderCount === 1 ? "order" : "orders"} this month
               {daysLeft > 0 ? ` · ${daysLeft} days left` : ""}
             </Text>
-          )}
+          ) : null}
         </View>
 
         {/* ── Top categories ── */}

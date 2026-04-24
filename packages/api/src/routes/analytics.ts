@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { db } from "../db/index";
-import { orders, orderItems } from "../db/schema";
+import { orders, orderItems, users } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
 
 const analytics = new Hono<{ Variables: AuthVariables }>();
@@ -146,9 +146,14 @@ analytics.get("/home", async (c) => {
     };
   });
 
+  const userRow = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  const monthlyBudget =
+    userRow && userRow.monthlyBudget !== null ? Number(userRow.monthlyBudget) : null;
+
   return c.json({
     monthSpend,
     monthOrderCount,
+    monthlyBudget,
     topCategories,
     recentOrders,
   });
