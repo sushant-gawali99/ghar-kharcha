@@ -131,18 +131,29 @@ function CategoryStrip({ categories }: { categories: string[] }) {
 function PlatformChip({ platform }: { platform: string }) {
   const cfg = platformConfig(platform);
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingLeft: 4,
+        paddingRight: 12,
+        paddingVertical: 4,
+        backgroundColor: T.paper,
+        borderRadius: 999,
+      }}
+    >
       <View
         style={{
-          width: 22,
-          height: 22,
+          width: 24,
+          height: 24,
           borderRadius: 999,
           backgroundColor: cfg.bg,
           alignItems: "center",
           justifyContent: "center",
         }}
       >
-        <Text style={{ color: cfg.fg, fontFamily: FONTS.sansSemiBold, fontSize: 11 }}>{cfg.glyph}</Text>
+        <Text style={{ color: cfg.fg, fontFamily: FONTS.sansSemiBold, fontSize: 12 }}>{cfg.glyph}</Text>
       </View>
       <Text style={{ color: T.ink, fontFamily: FONTS.sansMedium, fontSize: 14 }}>{cfg.label}</Text>
     </View>
