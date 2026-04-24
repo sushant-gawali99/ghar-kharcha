@@ -6,6 +6,7 @@ import {
   numeric,
   integer,
   pgEnum,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const uploadStatusEnum = pgEnum("upload_status", [
@@ -19,6 +20,7 @@ export const uploadStatusEnum = pgEnum("upload_status", [
 export const platformEnum = pgEnum("platform", [
   "zepto",
   "swiggy_instamart",
+  "other",
 ]);
 
 export const users = pgTable("users", {
@@ -53,25 +55,39 @@ export const uploads = pgTable("uploads", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const orders = pgTable("orders", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  uploadId: uuid("upload_id").references(() => uploads.id),
-  platform: platformEnum("platform").notNull(),
-  orderedAt: timestamp("ordered_at").notNull(),
-  subtotal: numeric("subtotal", { precision: 10, scale: 2 }).notNull(),
-  deliveryFee: numeric("delivery_fee", { precision: 10, scale: 2 })
-    .notNull()
-    .default("0"),
-  taxes: numeric("taxes", { precision: 10, scale: 2 }).notNull().default("0"),
-  discounts: numeric("discounts", { precision: 10, scale: 2 })
-    .notNull()
-    .default("0"),
-  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const orders = pgTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    uploadId: uuid("upload_id").references(() => uploads.id),
+    platform: platformEnum("platform").notNull(),
+    invoiceNo: text("invoice_no").notNull(),
+    orderNo: text("order_no"),
+    orderedAt: timestamp("ordered_at").notNull(),
+    itemTotal: numeric("item_total", { precision: 10, scale: 2 }).notNull(),
+    handlingFee: numeric("handling_fee", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    deliveryFee: numeric("delivery_fee", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    taxes: numeric("taxes", { precision: 10, scale: 2 }).notNull().default("0"),
+    discounts: numeric("discounts", { precision: 10, scale: 2 })
+      .notNull()
+      .default("0"),
+    total: numeric("total", { precision: 10, scale: 2 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userInvoiceUnique: uniqueIndex("orders_user_invoice_unique").on(
+      table.userId,
+      table.invoiceNo
+    ),
+  })
+);
 
 export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -81,7 +97,20 @@ export const orderItems = pgTable("order_items", {
   name: text("name").notNull(),
   quantity: numeric("quantity", { precision: 10, scale: 3 }).notNull(),
   unit: text("unit"),
-  unitPrice: numeric("unit_price", { precision: 10, scale: 2 }).notNull(),
-  totalPrice: numeric("total_price", { precision: 10, scale: 2 }).notNull(),
+  hsn: text("hsn"),
+  mrp: numeric("mrp", { precision: 10, scale: 2 }).notNull().default("0"),
+  productRate: numeric("product_rate", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0"),
+  discount: numeric("discount", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0"),
+  taxableAmount: numeric("taxable_amount", { precision: 10, scale: 2 })
+    .notNull()
+    .default("0"),
+  cgst: numeric("cgst", { precision: 10, scale: 2 }).notNull().default("0"),
+  sgst: numeric("sgst", { precision: 10, scale: 2 }).notNull().default("0"),
+  cess: numeric("cess", { precision: 10, scale: 2 }).notNull().default("0"),
+  totalAmount: numeric("total_amount", { precision: 10, scale: 2 }).notNull(),
   category: text("category"),
 });
