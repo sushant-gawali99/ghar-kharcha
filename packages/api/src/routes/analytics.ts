@@ -92,14 +92,59 @@ analytics.get("/home", async (c) => {
     .orderBy(desc(orders.orderedAt))
     .limit(5);
 
-  const recentOrders = recentOrderRows.map((row) => ({
-    id: row.id,
-    platform: row.platform,
-    total: Number(row.total),
-    orderedAt: row.orderedAt.toISOString(),
-    invoiceNo: row.invoiceNo,
-    itemCount: Number(row.itemCount),
-  }));
+  // Pull the item names + categories for those orders in one shot so we can
+  // build a preview string and a distinct-category list per order.
+  const recentIds = recentOrderRows.map((r) => r.id);
+  const recentItemRows = recentIds.length
+    ? await db
+        .select({
+          orderId: orderItems.orderId,
+          name: orderItems.name,
+          quantity: orderItems.quantity,
+          totalAmount: orderItems.totalAmount,
+          category: orderItems.category,
+        })
+        .from(orderItems)
+        .where(sql`${orderItems.orderId} in ${recentIds}`)
+        .orderBy(desc(orderItems.totalAmount))
+    : [];
+
+  const itemsByOrder = new Map<string, typeof recentItemRows>();
+  for (const item of recentItemRows) {
+    const bucket = itemsByOrder.get(item.orderId) ?? [];
+    bucket.push(item);
+    itemsByOrder.set(item.orderId, bucket);
+  }
+
+  const recentOrders = recentOrderRows.map((row) => {
+    const items = itemsByOrder.get(row.id) ?? [];
+    const preview = items
+      .slice(0, 3)
+      .map((it) => {
+        const qty = Number(it.quantity);
+        return qty > 1 ? `${it.name} × ${qty}` : it.name;
+      })
+      .join(" · ");
+    const categoryTotals = new Map<string, number>();
+    for (const it of items) {
+      const cat = it.category ?? "other";
+      categoryTotals.set(cat, (categoryTotals.get(cat) ?? 0) + Number(it.totalAmount));
+    }
+    const categories = [...categoryTotals.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([c]) => c);
+
+    return {
+      id: row.id,
+      platform: row.platform,
+      total: Number(row.total),
+      orderedAt: row.orderedAt.toISOString(),
+      invoiceNo: row.invoiceNo,
+      itemCount: Number(row.itemCount),
+      preview,
+      categories,
+    };
+  });
 
   return c.json({
     monthSpend,
