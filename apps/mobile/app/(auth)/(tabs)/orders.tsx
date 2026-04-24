@@ -112,14 +112,14 @@ function currentMonthString(): string {
 function CategoryStrip({ categories }: { categories: string[] }) {
   if (categories.length === 0) return null;
   return (
-    <View style={{ flexDirection: "row", gap: 6, marginTop: 12 }}>
+    <View style={{ flexDirection: "row", gap: 8, marginTop: 16 }}>
       {categories.map((id) => (
         <View
           key={id}
           style={{
             flex: 1,
-            height: 4,
-            borderRadius: 2,
+            height: 5,
+            borderRadius: 3,
             backgroundColor: categoryStyle(id).color,
           }}
         />
@@ -155,25 +155,25 @@ function OrderCard({ order, onPress }: { order: OrderCard; onPress: () => void }
       onPress={onPress}
       style={({ pressed }) => ({
         backgroundColor: T.card,
-        borderRadius: 18,
-        padding: 16,
-        marginBottom: 12,
+        borderRadius: 22,
+        padding: 20,
+        marginBottom: 14,
         opacity: pressed ? 0.9 : 1,
         ...shadowCard,
       })}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 2 }}>
           <PlatformChip platform={order.platform} />
           <Text style={{ color: T.ink3, fontFamily: FONTS.sans, fontSize: 13 }}>
             {formatOrderedAt(order.orderedAt)}
           </Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ color: T.ink, fontFamily: FONTS.serifBold, fontSize: 22 }}>
+          <Text style={{ color: T.ink, fontFamily: FONTS.serifBold, fontSize: 28, lineHeight: 32 }}>
             ₹{formatRupeesBig(order.total)}
           </Text>
-          <Text style={{ color: T.ink3, fontFamily: FONTS.sans, fontSize: 12, marginTop: 2 }}>
+          <Text style={{ color: T.ink3, fontFamily: FONTS.sans, fontSize: 13, marginTop: 4 }}>
             {order.itemCount} items
           </Text>
         </View>
@@ -183,8 +183,8 @@ function OrderCard({ order, onPress }: { order: OrderCard; onPress: () => void }
         style={{
           color: T.ink2,
           fontFamily: FONTS.sans,
-          fontSize: 15,
-          marginTop: 12,
+          fontSize: 16,
+          marginTop: 14,
         }}
       >
         {order.preview}
@@ -448,13 +448,13 @@ export default function OrdersScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ paddingHorizontal: 20, paddingTop: 10 }}>
+        <View style={{ paddingHorizontal: 20, paddingTop: 14 }}>
           <Text
             style={{
               color: T.ink3,
               fontFamily: FONTS.sansMedium,
               fontSize: 11,
-              letterSpacing: 1.3,
+              letterSpacing: 1.4,
             }}
           >
             ALL DELIVERIES · {monthLabel}
@@ -463,8 +463,9 @@ export default function OrdersScreen() {
             style={{
               color: T.ink,
               fontFamily: FONTS.serifBoldItalic,
-              fontSize: 44,
-              marginTop: 6,
+              fontSize: 48,
+              lineHeight: 54,
+              marginTop: 10,
             }}
           >
             Orders
@@ -473,8 +474,8 @@ export default function OrdersScreen() {
             style={{
               color: T.ink2,
               fontFamily: FONTS.serifItalic,
-              fontSize: 18,
-              marginTop: 4,
+              fontSize: 21,
+              marginTop: 8,
             }}
           >
             {data ? `${data.bills} bills · ${formatRupees(data.total)}` : " "}
@@ -506,16 +507,16 @@ export default function OrdersScreen() {
           </View>
         ) : (
           data?.sections.map((section) => (
-            <View key={section.label} style={{ paddingHorizontal: 20, marginTop: 8 }}>
+            <View key={section.label} style={{ paddingHorizontal: 20, marginTop: 6, marginBottom: 4 }}>
               <View
                 style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
                   alignItems: "baseline",
-                  marginBottom: 12,
+                  marginBottom: 16,
                 }}
               >
-                <Text style={{ color: T.ink, fontFamily: FONTS.serifBoldItalic, fontSize: 19 }}>
+                <Text style={{ color: T.ink, fontFamily: FONTS.serifBoldItalic, fontSize: 21 }}>
                   {section.label}
                 </Text>
                 <Text style={{ color: T.ink3, fontFamily: FONTS.sansMedium, fontSize: 14 }}>
