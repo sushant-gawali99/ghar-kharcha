@@ -3,10 +3,8 @@ import {
   Text,
   Pressable,
   ActivityIndicator,
-  StyleSheet,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
 import {
   GoogleSignin,
@@ -14,6 +12,7 @@ import {
 } from "@react-native-google-signin/google-signin";
 import { router } from "expo-router";
 import { useAuthStore } from "@/lib/auth";
+import { T, FONTS } from "@/lib/theme";
 
 const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
@@ -24,43 +23,95 @@ GoogleSignin.configure({
 
 function GoogleLogo() {
   return (
-    <View style={styles.googleLogoContainer}>
-      <Text style={styles.googleLogoText}>G</Text>
+    <View
+      style={{
+        width: 38, height: 38, borderRadius: 999,
+        backgroundColor: "#FFFFFF",
+        alignItems: "center", justifyContent: "center",
+      }}
+    >
+      <Text
+        style={{
+          fontFamily: FONTS.serifBold,
+          fontSize: 22,
+          color: "#4285F4",
+          lineHeight: 24,
+        }}
+      >
+        G
+      </Text>
     </View>
   );
 }
 
-function DecoCircle({
-  size,
-  top,
-  right,
-  left,
-  opacity,
-  color = "rgba(86,254,124,0.15)",
-}: {
-  size: number;
-  top?: number;
-  right?: number;
-  left?: number;
-  opacity?: number;
-  color?: string;
-}) {
+function PaperInvoice() {
+  // Decorative torn-receipt in the top-right corner.
   return (
     <View
-      style={[
-        styles.decoCircle,
-        {
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          top,
-          right,
-          left,
-          opacity: opacity ?? 1,
-          backgroundColor: color,
-        },
-      ]}
-    />
+      style={{
+        position: "absolute",
+        top: 80,
+        right: 24,
+        width: 108,
+        height: 152,
+        transform: [{ rotate: "10deg" }],
+      }}
+      pointerEvents="none"
+    >
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: "#FBF5E8",
+          borderRadius: 6,
+          paddingTop: 16,
+          paddingHorizontal: 12,
+          borderWidth: 0.5,
+          borderColor: "rgba(31,26,21,0.08)",
+          shadowColor: "#1F1A15",
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 6 },
+          elevation: 4,
+        }}
+      >
+        {[0.78, 0.62, 0.7, 0.5, 0.66, 0.42].map((w, i) => (
+          <View
+            key={i}
+            style={{
+              height: 3,
+              width: `${w * 100}%`,
+              backgroundColor: "rgba(31,26,21,0.18)",
+              borderRadius: 999,
+              marginBottom: 8,
+            }}
+          />
+        ))}
+      </View>
+      {/* torn bottom edge */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-around",
+          marginTop: -1,
+        }}
+      >
+        {Array.from({ length: 9 }).map((_, i) => (
+          <View
+            key={i}
+            style={{
+              width: 0,
+              height: 0,
+              borderLeftWidth: 6,
+              borderRightWidth: 6,
+              borderTopWidth: 8,
+              borderLeftColor: "transparent",
+              borderRightColor: "transparent",
+              borderTopColor: "#FBF5E8",
+            }}
+          />
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -74,15 +125,20 @@ export default function SignInScreen() {
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       const result = await GoogleSignin.signIn();
       const idToken = result.data?.idToken;
-      if (!idToken) {
-        throw new Error("No ID token received from Google.");
-      }
+      if (!idToken) throw new Error("No ID token received from Google.");
 
-      const res = await fetch(`${API_BASE}/api/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-      });
+      let res: Response;
+      try {
+        res = await fetch(`${API_BASE}/api/auth/google`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken }),
+        });
+      } catch (err) {
+        throw new Error(
+          "Could not reach the app server. Check that the local API is running and the emulator can access it.",
+        );
+      }
 
       if (!res.ok) {
         const body = await res.json();
@@ -96,7 +152,7 @@ export default function SignInScreen() {
       if (err?.code === statusCodes.SIGN_IN_CANCELLED) return;
       Alert.alert(
         "Sign-in failed",
-        err instanceof Error ? err.message : "Please try again."
+        err instanceof Error ? err.message : "Google sign-in failed. Please try again.",
       );
     } finally {
       setLoading(false);
@@ -104,235 +160,119 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={styles.root}>
-      {/* ── Hero area ── */}
-      <View style={styles.hero}>
-        <SafeAreaView edges={["top"]} style={styles.safeTop}>
-          <DecoCircle size={320} top={-120} right={-100} />
-          <DecoCircle size={180} top={60} left={-60} opacity={0.6} />
-          <DecoCircle
-            size={80}
-            top={180}
-            right={40}
-            color="rgba(255,255,255,0.08)"
-          />
+    <View style={{ flex: 1, backgroundColor: T.paper }}>
+      {/* ── Background Devanagari watermark ── */}
+      <Text
+        style={{
+          position: "absolute",
+          top: 340,
+          left: -20,
+          fontFamily: "System",
+          fontSize: 220,
+          color: "rgba(227,168,46,0.22)",
+          lineHeight: 200,
+          transform: [{ rotate: "-6deg" }],
+        }}
+        pointerEvents="none"
+      >
+        खर्चा
+      </Text>
 
-          <View style={styles.wordmark}>
-            <View style={styles.logoChip}>
-              <Text style={styles.logoChipText}>GK</Text>
-            </View>
-            <Text style={styles.appName}>Ghar Kharcha</Text>
-          </View>
+      {/* ── Torn paper receipt top-right ── */}
+      <PaperInvoice />
 
-          <View style={styles.heroCopy}>
-            <Text style={styles.heroTitle}>Your grocery{"\n"}story, told.</Text>
-            <Text style={styles.heroSub}>
-              Upload invoices from Zepto & Swiggy{"\n"}Instamart and watch your
-              spending{"\n"}come alive.
-            </Text>
-          </View>
-        </SafeAreaView>
+      {/* ── Hero copy ── */}
+      <View style={{ flex: 1, paddingHorizontal: 28, justifyContent: "flex-end", paddingBottom: 28 }}>
+        <Text style={{ fontFamily: FONTS.serifItalic, fontSize: 60, color: T.ink, letterSpacing: -1, lineHeight: 64 }}>
+          Ghar <Text style={{ fontFamily: FONTS.serifBold, fontStyle: "normal" }}>Kharcha</Text>
+        </Text>
+        <Text style={{ fontFamily: "System", fontSize: 24, color: T.ink2, marginTop: 10 }}>
+          घर खर्चा
+        </Text>
+
+        <Text
+          style={{
+            fontFamily: FONTS.serifBold,
+            fontSize: 30,
+            color: T.ink,
+            marginTop: 36,
+            lineHeight: 38,
+            letterSpacing: -0.5,
+          }}
+        >
+          A quiet ledger for{" "}
+          <Text style={{ fontFamily: FONTS.serifBoldItalic, color: T.terracotta }}>dal,</Text>{" "}
+          <Text style={{ fontFamily: FONTS.serifBoldItalic, color: T.terracotta }}>doodh</Text>{" "}
+          and everything else.
+        </Text>
+
+        <Text style={{ fontFamily: FONTS.sans, fontSize: 15, color: T.ink2, marginTop: 18, lineHeight: 22, maxWidth: 340 }}>
+          Drop in a Zepto or Blinkit bill. We'll sort every line into its pantry shelf.
+        </Text>
       </View>
 
       {/* ── Bottom sheet ── */}
-      <View style={styles.sheet}>
-        <SafeAreaView edges={["bottom"]} style={styles.sheetInner}>
-          <View style={styles.handle} />
-
-          <Text style={styles.sheetTitle}>Get started</Text>
-          <Text style={styles.sheetSub}>
-            Sign in to track, analyse and save on your grocery spends.
-          </Text>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.googleBtn,
-              pressed && styles.googleBtnPressed,
-            ]}
-            onPress={handleGoogleSignIn}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#006a28" size="small" />
-            ) : (
-              <>
-                <GoogleLogo />
-                <Text style={styles.googleBtnText}>Continue with Google</Text>
-              </>
-            )}
-          </Pressable>
-
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>
-              More sign-in options coming soon
+      <View style={{ paddingHorizontal: 22, paddingBottom: 40, paddingTop: 12 }}>
+        <Pressable
+          onPress={handleGoogleSignIn}
+          disabled={loading}
+          style={{
+            flexDirection: "row", alignItems: "center",
+            gap: 14, paddingVertical: 14, paddingHorizontal: 14,
+            borderRadius: 20,
+            backgroundColor: T.ink,
+            shadowColor: "#000",
+            shadowOpacity: 0.35,
+            shadowRadius: 18,
+            shadowOffset: { width: 0, height: 10 },
+            elevation: 10,
+            opacity: loading ? 0.75 : 1,
+          }}
+        >
+          <GoogleLogo />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: FONTS.sansSemiBold, fontSize: 16, color: T.paper, letterSpacing: 0.2 }}>
+              {loading ? "Signing in…" : "Continue with Google"}
             </Text>
-            <View style={styles.dividerLine} />
+            <Text style={{ fontFamily: FONTS.sans, fontSize: 12, color: "rgba(243,234,219,0.55)", marginTop: 2 }}>
+              Fastest way in · ~2 seconds
+            </Text>
           </View>
+          {loading ? (
+            <ActivityIndicator color={T.haldi} />
+          ) : (
+            <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 22, color: T.haldi, marginRight: 6 }}>→</Text>
+          )}
+        </Pressable>
 
-          <Text style={styles.terms}>
-            By continuing, you agree to our{" "}
-            <Text style={styles.termsLink}>Terms of Service</Text> and{" "}
-            <Text style={styles.termsLink}>Privacy Policy</Text>.
-          </Text>
-        </SafeAreaView>
+        <Text
+          style={{
+            fontFamily: FONTS.serifItalic,
+            fontSize: 13,
+            color: T.ink3,
+            textAlign: "center",
+            marginTop: 22,
+          }}
+        >
+          More sign-in options, soon.
+        </Text>
+
+        <Text
+          style={{
+            fontFamily: FONTS.sans,
+            fontSize: 12,
+            color: T.ink3,
+            textAlign: "center",
+            lineHeight: 18,
+            marginTop: 14,
+          }}
+        >
+          By continuing, you agree to our{" "}
+          <Text style={{ color: T.ink2, textDecorationLine: "underline" }}>Terms</Text>
+          {" "}and{" "}
+          <Text style={{ color: T.ink2, textDecorationLine: "underline" }}>Privacy</Text>.
+        </Text>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#006a28" },
-
-  hero: { flex: 1, backgroundColor: "#006a28", overflow: "hidden" },
-  safeTop: { flex: 1, paddingHorizontal: 28, paddingBottom: 32 },
-  decoCircle: { position: "absolute" },
-
-  wordmark: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    marginTop: 16,
-    zIndex: 1,
-  },
-  logoChip: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: "#56fe7c",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  logoChipText: {
-    fontFamily: "PlusJakartaSans_800ExtraBold",
-    fontSize: 16,
-    color: "#004818",
-  },
-  appName: {
-    fontFamily: "PlusJakartaSans_700Bold",
-    fontSize: 20,
-    color: "#ffffff",
-    letterSpacing: -0.3,
-  },
-
-  heroCopy: { flex: 1, justifyContent: "flex-end", zIndex: 1 },
-  heroTitle: {
-    fontFamily: "PlusJakartaSans_800ExtraBold",
-    fontSize: 48,
-    lineHeight: 52,
-    letterSpacing: -1.5,
-    color: "#ffffff",
-    marginBottom: 16,
-  },
-  heroSub: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 15,
-    lineHeight: 22,
-    color: "rgba(214,255,225,0.85)",
-  },
-
-  sheet: {
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    shadowColor: "#2d2f31",
-    shadowOpacity: 0.08,
-    shadowRadius: 32,
-    shadowOffset: { width: 0, height: -16 },
-    elevation: 16,
-  },
-  sheetInner: {
-    paddingHorizontal: 28,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 9999,
-    backgroundColor: "#e1e2e6",
-    marginBottom: 28,
-  },
-  sheetTitle: {
-    fontFamily: "PlusJakartaSans_800ExtraBold",
-    fontSize: 28,
-    letterSpacing: -0.8,
-    color: "#2d2f31",
-    marginBottom: 8,
-  },
-  sheetSub: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 14,
-    lineHeight: 20,
-    color: "#5a5c5e",
-    marginBottom: 28,
-  },
-
-  googleBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 12,
-    backgroundColor: "#ffffff",
-    borderRadius: 9999,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    shadowColor: "#2d2f31",
-    shadowOpacity: 0.08,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: "rgba(172,173,175,0.25)",
-  },
-  googleBtnPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.97 }],
-  },
-  googleBtnText: {
-    fontFamily: "PlusJakartaSans_700Bold",
-    fontSize: 16,
-    color: "#2d2f31",
-    letterSpacing: -0.2,
-  },
-  googleLogoContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 9999,
-    backgroundColor: "#f6f6f9",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  googleLogoText: {
-    fontFamily: "PlusJakartaSans_800ExtraBold",
-    fontSize: 14,
-    color: "#4285F4",
-  },
-
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginTop: 24,
-    marginBottom: 20,
-  },
-  dividerLine: { flex: 1, height: 1, backgroundColor: "#e1e2e6" },
-  dividerText: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 11,
-    color: "#acadaf",
-    textAlign: "center",
-    flexShrink: 1,
-  },
-
-  terms: {
-    fontFamily: "Inter_400Regular",
-    fontSize: 12,
-    lineHeight: 18,
-    color: "#acadaf",
-    textAlign: "center",
-    paddingBottom: 8,
-  },
-  termsLink: { color: "#006a28", fontFamily: "Inter_600SemiBold" },
-});
