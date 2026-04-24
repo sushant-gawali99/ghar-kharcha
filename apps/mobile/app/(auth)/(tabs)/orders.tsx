@@ -156,21 +156,28 @@ function OrderCard({ order, onPress }: { order: OrderCard; onPress: () => void }
       style={({ pressed }) => ({
         backgroundColor: T.card,
         borderRadius: 22,
-        padding: 20,
+        paddingVertical: 18,
+        paddingHorizontal: 18,
         marginBottom: 14,
-        opacity: pressed ? 0.9 : 1,
-        ...shadowCard,
+        borderWidth: 1,
+        borderColor: "rgba(31,26,21,0.05)",
+        opacity: pressed ? 0.92 : 1,
+        shadowColor: "#1F1A15",
+        shadowOpacity: 0.09,
+        shadowRadius: 16,
+        shadowOffset: { width: 0, height: 6 },
+        elevation: 8,
       })}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 12, paddingTop: 2 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 2 }}>
           <PlatformChip platform={order.platform} />
           <Text style={{ color: T.ink3, fontFamily: FONTS.sans, fontSize: 13 }}>
             {formatOrderedAt(order.orderedAt)}
           </Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ color: T.ink, fontFamily: FONTS.serifBold, fontSize: 28, lineHeight: 32 }}>
+          <Text style={{ color: T.ink, fontFamily: FONTS.serifBold, fontSize: 26, lineHeight: 30 }}>
             ₹{formatRupeesBig(order.total)}
           </Text>
           <Text style={{ color: T.ink3, fontFamily: FONTS.sans, fontSize: 13, marginTop: 4 }}>
@@ -181,7 +188,7 @@ function OrderCard({ order, onPress }: { order: OrderCard; onPress: () => void }
       <Text
         numberOfLines={1}
         style={{
-          color: T.ink2,
+          color: T.ink,
           fontFamily: FONTS.sans,
           fontSize: 16,
           marginTop: 14,
