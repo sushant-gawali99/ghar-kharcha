@@ -302,17 +302,6 @@ export default function ProfileScreen() {
           <SettingRow label="Pantry staples" detail="Coming soon" />
         </SettingsGroup>
 
-        <SettingsGroup title="Preferences">
-          <SettingRow label="Currency format" detail="en-IN (₹)" />
-          <SettingRow label="Language" detail="English + Hindi" />
-          <SettingRow label="Notifications" detail="Off" />
-        </SettingsGroup>
-
-        <SettingsGroup title="Data">
-          <SettingRow label="Export CSV" />
-          <SettingRow label="Privacy" />
-        </SettingsGroup>
-
         {/* ── Sign out ── */}
         <View style={{ paddingHorizontal: 22, marginTop: 24 }}>
           <Pressable
