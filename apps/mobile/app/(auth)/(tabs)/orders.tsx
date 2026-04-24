@@ -165,19 +165,19 @@ function OrderCard({ order, onPress }: { order: OrderCard; onPress: () => void }
     <Pressable
       onPress={onPress}
       style={({ pressed }) => ({
-        backgroundColor: T.card,
+        backgroundColor: "#FFFBF0",
         borderRadius: 22,
         paddingVertical: 18,
         paddingHorizontal: 18,
         marginBottom: 14,
         borderWidth: 1,
-        borderColor: "rgba(31,26,21,0.05)",
+        borderColor: "rgba(31,26,21,0.12)",
         opacity: pressed ? 0.92 : 1,
         shadowColor: "#1F1A15",
-        shadowOpacity: 0.09,
-        shadowRadius: 16,
-        shadowOffset: { width: 0, height: 6 },
-        elevation: 8,
+        shadowOpacity: 0.12,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: 8 },
+        elevation: 12,
       })}
     >
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
