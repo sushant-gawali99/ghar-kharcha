@@ -157,6 +157,11 @@ export default function ProfileScreen() {
   const clearSession = useAuthStore((s) => s.clearSession);
   const [monthlyBudget, setMonthlyBudget] = useState<number | null>(null);
   const [budgetModalOpen, setBudgetModalOpen] = useState(false);
+  const [stats, setStats] = useState<{
+    totalInvoices: number;
+    totalItems: number;
+    monthSpend: number;
+  } | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -164,8 +169,13 @@ export default function ProfileScreen() {
       let cancelled = false;
       authFetch("/api/me")
         .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`))))
-        .then((data: { monthlyBudget: number | null }) => {
-          if (!cancelled) setMonthlyBudget(data.monthlyBudget);
+        .then((data: {
+          monthlyBudget: number | null;
+          stats?: { totalInvoices: number; totalItems: number; monthSpend: number };
+        }) => {
+          if (cancelled) return;
+          setMonthlyBudget(data.monthlyBudget);
+          if (data.stats) setStats(data.stats);
         })
         .catch(() => {});
       return () => {
@@ -279,9 +289,20 @@ export default function ProfileScreen() {
             {/* stats */}
             <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
               {[
-                { n: "0", l: "Invoices" },
-                { n: "0", l: "Items tracked" },
-                { n: "—", l: "This month" },
+                {
+                  n: stats ? String(stats.totalInvoices) : "—",
+                  l: "Invoices",
+                },
+                {
+                  n: stats ? String(stats.totalItems) : "—",
+                  l: "Items tracked",
+                },
+                {
+                  n: stats
+                    ? `₹${Math.round(stats.monthSpend).toLocaleString("en-IN")}`
+                    : "—",
+                  l: "This month",
+                },
               ].map((s) => (
                 <View key={s.l}>
                   <Text style={{ fontFamily: FONTS.serif, fontSize: 20, color: T.paper }}>{s.n}</Text>
