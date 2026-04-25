@@ -6,6 +6,14 @@ function normaliseDateToISO(raw: string): string {
   return raw;
 }
 
+function lookAheadTotal(lines: string[], fromIndex: number): number {
+  for (let j = fromIndex + 1; j < Math.min(fromIndex + 6, lines.length); j++) {
+    const tm = lines[j].match(/^([\d.]+)\s+([\d.]+)$/);
+    if (tm) return parseFloat(tm[2]);
+  }
+  return 0;
+}
+
 function parseZeptoItems(text: string): ParsedGroceryItem[] {
   // Item table: after first "Total\nAmt.\n" header, before "Item Total" / "Invoice Value"
   const headerToken = "Total\nAmt.\n";
@@ -32,18 +40,10 @@ function parseZeptoItems(text: string): ParsedGroceryItem[] {
       /^(\d+)\s+(.+?)\s+([\d.]+)\s+(\d{5,8})\s+(\d+)\s+([\d.]+)\s+[\d.]+%\s+([\d.]+)/
     );
     if (combined) {
-      // Find the terminal "cessAmt totalAmt" line in next 5 lines
-      let total = 0;
-      for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
-        const tm = lines[j].match(/^([\d.]+)\s+([\d.]+)$/);
-        if (tm) {
-          total = parseFloat(tm[2]);
-          break;
-        }
-      }
+      const total = lookAheadTotal(lines, i);
 
       const mrp = parseFloat(combined[3]);
-      const qty = parseInt(combined[5]);
+      const qty = parseInt(combined[5], 10);
       const productRate = parseFloat(combined[6]);
       const taxableAmt = parseFloat(combined[7]);
       const discount = Math.max(0, productRate * qty - taxableAmt);
@@ -74,18 +74,10 @@ function parseZeptoItems(text: string): ParsedGroceryItem[] {
       /^([\d.]+)\s+(\d{5,8})\s+(\d+)\s+([\d.]+)\s+[\d.]+%\s+([\d.]+)/
     );
     if (dm) {
-      // Find the terminal "cessAmt totalAmt" line in next 5 lines
-      let total = 0;
-      for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
-        const tm = lines[j].match(/^([\d.]+)\s+([\d.]+)$/);
-        if (tm) {
-          total = parseFloat(tm[2]);
-          break;
-        }
-      }
+      const total = lookAheadTotal(lines, i);
 
       const mrp = parseFloat(dm[1]);
-      const qty = parseInt(dm[3]);
+      const qty = parseInt(dm[3], 10);
       const productRate = parseFloat(dm[4]);
       const taxableAmt = parseFloat(dm[5]);
       const discount = Math.max(0, productRate * qty - taxableAmt);
@@ -128,6 +120,7 @@ function parseZeptoItems(text: string): ParsedGroceryItem[] {
     }
 
     // state === "collect": accumulate name lines
+    if (state !== "collect") continue;
     if (/^[\d.]+%$/.test(line)) continue;
     if (/^\+\s/.test(line)) continue;
     // page subtotal line: multiple numbers separated by spaces
