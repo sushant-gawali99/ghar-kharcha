@@ -9,6 +9,7 @@ export async function handleIncomingPdfUri(uri: string | null): Promise<void> {
       console.warn("[PDF intent] cacheDirectory unavailable");
       return;
     }
+    // TODO: fixed filename overwrites on rapid re-share; use a timestamp/uuid suffix before prod
     const dest = cacheDir + "pending-invoice.pdf";
     await FileSystem.copyAsync({ from: uri, to: dest });
     usePendingPdfStore.getState().setPending(dest);

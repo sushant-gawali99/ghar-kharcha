@@ -2,8 +2,10 @@ import { handleIncomingPdfUri } from './handleIncomingPdfUri';
 import * as FileSystem from 'expo-file-system';
 import { usePendingPdfStore } from '@/stores/pendingPdfStore';
 
+let mockCacheDirectory: string | null = 'file:///cache/';
+
 jest.mock('expo-file-system', () => ({
-  cacheDirectory: 'file:///cache/',
+  get cacheDirectory() { return mockCacheDirectory; },
   copyAsync: jest.fn(),
 }));
 
@@ -17,6 +19,7 @@ const mockSetPending = jest.fn();
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockCacheDirectory = 'file:///cache/';
   mockCopyAsync.mockResolvedValue(undefined);
   mockGetState.mockReturnValue({ setPending: mockSetPending, clearPending: jest.fn(), pendingUri: null });
 });
@@ -49,4 +52,10 @@ it('does not call setPending if copyAsync throws', async () => {
   mockCopyAsync.mockRejectedValue(new Error('Permission denied'));
   await handleIncomingPdfUri('content://com.android.providers.downloads/document/123');
   expect(mockSetPending).not.toHaveBeenCalled();
+});
+
+it('does nothing when cacheDirectory is null', async () => {
+  mockCacheDirectory = null;
+  await handleIncomingPdfUri('content://com.android.providers.downloads/document/123');
+  expect(mockCopyAsync).not.toHaveBeenCalled();
 });
