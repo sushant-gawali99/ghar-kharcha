@@ -7,7 +7,7 @@ function normaliseDateToISO(raw: string): string {
   };
   // "14-Apr-2026"
   const long = raw.match(/^(\d{2})-([A-Za-z]+)-(\d{4})$/);
-  if (long) return `${long[3]}-${months[long[2]] ?? "01"}-${long[1]}`;
+  if (long) return `${long[3]}-${months[long[2]] ?? long[2]}-${long[1]}`;
   // "14-04-2026"
   const short = raw.match(/^(\d{2})-(\d{2})-(\d{4})$/);
   if (short) return `${short[3]}-${short[2]}-${short[1]}`;
@@ -64,6 +64,9 @@ export function parseBlinkitText(text: string): ParsedGroceryOrder {
     }
 
     // Extract invoice metadata from the first product block
+    // Use the first product block's invoice number as the order's invoice number.
+    // Blinkit forwarded invoices contain multiple sub-invoice numbers (one per seller);
+    // we pick the first rather than concatenating all.
     if (!invoiceNo) {
       invoiceNo =
         block.match(/Invoice Number\s*:?\s*([A-Z0-9]+)/)?.[1]?.trim() ?? "";
@@ -108,6 +111,9 @@ export function parseBlinkitText(text: string): ParsedGroceryOrder {
     }
   }
 
+  const totalTaxes = items.reduce((s, it) => s + it.cgst + it.sgst + it.cess, 0);
+  const totalDiscount = items.reduce((s, it) => s + it.discount, 0);
+
   return {
     platform: "blinkit",
     invoiceNo,
@@ -117,8 +123,8 @@ export function parseBlinkitText(text: string): ParsedGroceryOrder {
     itemTotal: items.reduce((s, it) => s + it.totalAmount, 0),
     handlingFee,
     deliveryFee,
-    totalTaxes: 0,
-    totalDiscount: 0,
+    totalTaxes,
+    totalDiscount,
     totalAmount,
   };
 }
