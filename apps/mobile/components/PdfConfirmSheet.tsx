@@ -64,7 +64,6 @@ export function PdfConfirmSheet() {
 
   const handleDismiss = () => {
     clearPending();
-    setState('idle');
   };
 
   return (
@@ -111,12 +110,14 @@ export function PdfConfirmSheet() {
                 <Text style={{ fontFamily: FONTS.sans, fontSize: 12, color: T.ink3, marginTop: 6 }}>This usually takes a few seconds</Text>
               </View>
               <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', opacity: 0.4 }}>
+                {/* Cancel button — disabled during parsing */}
+                <Pressable disabled style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', opacity: 0.4 }}>
                   <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 14, color: T.ink2 }}>Cancel</Text>
-                </View>
-                <View style={{ flex: 2, paddingVertical: 14, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', opacity: 0.4 }}>
+                </Pressable>
+                {/* Add Invoice button — disabled during parsing */}
+                <Pressable disabled style={{ flex: 2, paddingVertical: 14, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', opacity: 0.4 }}>
                   <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 14, color: T.ink2 }}>Add Invoice</Text>
-                </View>
+                </Pressable>
               </View>
             </>
           )}
@@ -149,7 +150,7 @@ export function PdfConfirmSheet() {
                 <Pressable onPress={handleDismiss} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: T.card, alignItems: 'center' }}>
                   <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 14, color: T.ink2 }}>Dismiss</Text>
                 </Pressable>
-                <Pressable onPress={() => setState('idle')} style={{ flex: 2, paddingVertical: 14, borderRadius: 12, backgroundColor: T.ink, alignItems: 'center' }}>
+                <Pressable onPress={() => { setState('idle'); setErrorMessage(''); }} style={{ flex: 2, paddingVertical: 14, borderRadius: 12, backgroundColor: T.ink, alignItems: 'center' }}>
                   <Text style={{ fontFamily: FONTS.sansMedium, fontSize: 14, color: T.paper }}>Retry</Text>
                 </Pressable>
               </View>

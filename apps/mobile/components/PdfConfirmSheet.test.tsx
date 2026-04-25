@@ -28,10 +28,6 @@ function makeStore(overrides: Partial<StoreShape> = {}): StoreShape {
   };
 }
 
-// usePendingPdfStore is called with a selector: usePendingPdfStore((s) => s.pendingUri)
-// We need mockImplementation so the selector receives the store object.
-jest.mocked(usePendingPdfStore).mockImplementation((selector: any) => selector(currentStore));
-
 beforeEach(() => {
   jest.clearAllMocks();
   currentStore = makeStore();
@@ -40,7 +36,6 @@ beforeEach(() => {
 
 it('renders nothing when pendingUri is null', () => {
   currentStore = makeStore({ pendingUri: null });
-  jest.mocked(usePendingPdfStore).mockImplementation((selector: any) => selector(currentStore));
   const { queryByText } = render(<PdfConfirmSheet />);
   expect(queryByText('Add Invoice')).toBeNull();
 });
@@ -55,7 +50,6 @@ it('shows idle state with filename and action buttons when pendingUri is set', (
 it('Cancel calls clearPending', () => {
   const clearPending = jest.fn();
   currentStore = makeStore({ clearPending });
-  jest.mocked(usePendingPdfStore).mockImplementation((selector: any) => selector(currentStore));
   const { getByText } = render(<PdfConfirmSheet />);
   fireEvent.press(getByText('Cancel'));
   expect(clearPending).toHaveBeenCalledTimes(1);
@@ -64,7 +58,6 @@ it('Cancel calls clearPending', () => {
 it('Add Invoice shows parsing state then navigates to orders on success', async () => {
   const clearPending = jest.fn();
   currentStore = makeStore({ clearPending });
-  jest.mocked(usePendingPdfStore).mockImplementation((selector: any) => selector(currentStore));
   mockAuthFetch.mockResolvedValue({
     ok: true,
     json: async () => ({ status: 'success', total: '450.00', itemCount: 12, platform: 'zepto' }),
@@ -99,6 +92,19 @@ it('shows error state when fetch throws', async () => {
 
   await waitFor(() => expect(getByText("Couldn't parse invoice")).toBeTruthy());
   expect(getByText('Retry')).toBeTruthy();
+});
+
+it('shows error state when server returns non-ok status', async () => {
+  mockAuthFetch.mockResolvedValue({
+    ok: false,
+    json: async () => ({ error: 'File too large' }),
+  } as Response);
+
+  const { getByText } = render(<PdfConfirmSheet />);
+  fireEvent.press(getByText('Add Invoice'));
+
+  await waitFor(() => expect(getByText("Couldn't parse invoice")).toBeTruthy());
+  expect(getByText('File too large')).toBeTruthy();
 });
 
 it('Retry returns to idle state', async () => {
