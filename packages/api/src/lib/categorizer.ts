@@ -1,8 +1,6 @@
 import type { GroceryCategory } from "./groceryCategories";
 import { GROCERY_CATEGORIES } from "./groceryCategories";
-import type { AnthropicLike } from "./invoiceExtractor";
-
-const HAIKU_MODEL = "claude-haiku-4-5-20251001";
+import { HAIKU_MODEL, type AnthropicLike } from "./invoiceExtractor";
 
 export async function categorizeItems(
   itemNames: string[],
@@ -29,7 +27,7 @@ export async function categorizeItems(
     const text =
       (response.content as Array<{ type: string; text?: string }>)
         .find((b) => b.type === "text")?.text ?? "";
-    const jsonMatch = text.match(/\[[\s\S]*?\]/);
+    const jsonMatch = text.match(/\[\s*["'][\s\S]*\]/);
     if (!jsonMatch) return fallback();
 
     const parsed = JSON.parse(jsonMatch[0]) as unknown[];

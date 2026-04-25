@@ -53,4 +53,11 @@ describe("categorizeItems", () => {
     const result = await categorizeItems(["Milk"], client as never);
     expect(result).toEqual(["other"]);
   });
+
+  it("returns correct categories when response has preamble text with brackets", async () => {
+    // Non-greedy regex would match [1] instead of ["dairy"] here
+    const client = makeClient('Based on rule [1], the categories are: ["dairy", "vegetables"]');
+    const result = await categorizeItems(["Milk", "Spinach"], client as never);
+    expect(result).toEqual(["dairy", "vegetables"]);
+  });
 });
