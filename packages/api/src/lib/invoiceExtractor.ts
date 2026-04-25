@@ -73,10 +73,25 @@ export const SYSTEM_PROMPT = [
   "- `platform`:",
   "  - \"zepto\" if the invoice mentions Zepto, zeptonow.com, or Drogheria Sellers.",
   "  - \"swiggy_instamart\" if it mentions Swiggy, Instamart, or IMSCT.",
+  "  - \"blinkit\" if it mentions Blinkit, Blink Commerce, or Zomato Hyperpure.",
   "  - \"other\" otherwise.",
   "- If a field is not present in the invoice, use \"\" for strings and 0",
   "  for numbers. Never invent values.",
   "- `groceryCategory` must be one of the enum values.",
+  "",
+  "Blinkit-specific rules (applies when seller is Blink Commerce or Zomato Hyperpure):",
+  "- Blinkit PDFs are often forwarded/combined invoices with multiple sub-invoices",
+  "  (different sellers, same Order Id). Aggregate ALL items from every page into",
+  "  a single record_invoice call. Use the sum of all sub-invoice totals as totalAmount.",
+  "- The item table contains 'Delivery and other charges' rows interspersed between",
+  "  product rows. These are delivery charges, NOT products \u2014 do not include them in",
+  "  the items array. Sum the Total column of all such rows into deliveryFee instead.",
+  "- Each product's totalAmount is the Total column of its own product row only",
+  "  (not including the delivery row below it).",
+  "- The 'Annexure / Handling charge' section at the bottom of a page is a GST",
+  "  breakdown of those same delivery charges \u2014 never set handlingFee from it.",
+  "  handlingFee is only set from a dedicated 'Handling charge' sub-invoice page",
+  "  (a separate page that contains ONLY a handling charge line item).",
 ].join("\n");
 
 export const INVOICE_TOOL = {
@@ -90,7 +105,7 @@ export const INVOICE_TOOL = {
       "totalTaxes", "totalDiscount", "totalAmount",
     ],
     properties: {
-      platform: { enum: ["zepto", "swiggy_instamart", "other"] },
+      platform: { enum: ["zepto", "swiggy_instamart", "blinkit", "other"] },
       orderDate: { type: "string", description: "YYYY-MM-DD" },
       invoiceNo: { type: "string" },
       orderNo: { type: "string" },
@@ -168,7 +183,7 @@ export function validate(order: ParsedGroceryOrder): ValidationResult {
 // Orchestration: extractStructured + extractInvoice
 // ---------------------------------------------------------------------------
 
-interface AnthropicLike {
+export interface AnthropicLike {
   messages: {
     create: (args: unknown) => Promise<{
       content: Array<{ type: string; name?: string; input?: unknown; text?: string }>;
