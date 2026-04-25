@@ -1,5 +1,5 @@
 import "../global.css";
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useFonts } from "expo-font";
@@ -42,10 +42,16 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    Linking.getInitialURL().then(handleIncomingPdfUri).catch((err) => {
+    const handleUri = async (uri: string | null) => {
+      await handleIncomingPdfUri(uri);
+      if (uri?.startsWith("content://")) {
+        try { router.replace("/"); } catch {}
+      }
+    };
+    Linking.getInitialURL().then(handleUri).catch((err) => {
       console.warn("[PDF intent] getInitialURL failed:", err);
     });
-    const sub = Linking.addEventListener("url", ({ url }) => handleIncomingPdfUri(url));
+    const sub = Linking.addEventListener("url", ({ url }) => handleUri(url));
     return () => sub.remove();
   }, []);
 
