@@ -31,7 +31,7 @@ if (existsSync(envPath)) {
   }
 }
 
-const REQUIRED_ENV_VARS = ["DATABASE_URL", "ANTHROPIC_API_KEY"] as const;
+const REQUIRED_ENV_VARS = ["DATABASE_URL", "ANTHROPIC_API_KEY", "JWT_SECRET"] as const;
 
 for (const key of REQUIRED_ENV_VARS) {
   if (!process.env[key]) {
