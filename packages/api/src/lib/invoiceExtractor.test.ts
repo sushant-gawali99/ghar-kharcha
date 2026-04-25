@@ -75,6 +75,49 @@ describe("validate", () => {
     if (!result.ok) expect(result.reason).toMatch(/platform/i);
   });
 
+  it("accepts blinkit platform", () => {
+    expect(validate(makeOrder({ platform: "blinkit" })).ok).toBe(true);
+  });
+
+  it("accepts blinkit invoice where delivery charges are in deliveryFee not handlingFee", () => {
+    // Mirrors the Blinkit forwarded-invoice pattern:
+    // 3 drink items totalling 119, deliveryFee=6.40, handlingFee=5.60, total=235
+    // (Annexure taxable value of 5.09 must NOT be added as handlingFee)
+    const items = (
+      [
+        ["Fanta Orange", 40],
+        ["Thums Up", 39],
+        ["Paper Boat Mango", 40],
+        ["Desi Farms Paneer", 80],
+        ["Spinach", 24],
+      ] as const
+    ).map(([name, totalAmount]) => ({
+      name,
+      quantity: 1,
+      unit: "pack",
+      mrp: totalAmount,
+      productRate: totalAmount,
+      discount: 0,
+      taxableAmount: totalAmount,
+      cgst: 0,
+      sgst: 0,
+      cess: 0,
+      totalAmount,
+      groceryCategory: "other" as const,
+      hsn: "",
+    }));
+    const result = validate(
+      makeOrder({
+        platform: "blinkit",
+        items,
+        handlingFee: 5.60,
+        deliveryFee: 6.40,
+        totalAmount: 235.00,
+      }),
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it("rejects year-only orderDate (not YYYY-MM-DD)", () => {
     const result = validate(makeOrder({ orderDate: "2026" }));
     expect(result.ok).toBe(false);
@@ -224,5 +267,42 @@ desc2("extractInvoice orchestration", () => {
 
     const result = await extractInvoice(validPdfBuffer(), { client, pdfText });
     expect2(result).toEqual(goodOrder);
+  });
+
+  it2("uses regex parser when it returns a valid order — Claude not called for parsing", async () => {
+    const validOrder = makeOrder();
+    const regexParser = vi.fn().mockReturnValue(validOrder);
+    const categorizer = vi.fn().mockResolvedValue(["dairy"]);
+    const client = { messages: { create: vi.fn() } };
+    const pdfText = vi.fn().mockResolvedValue("x".repeat(500));
+
+    const result = await extractInvoice(validPdfBuffer(), {
+      client,
+      pdfText,
+      regexParser,
+      categorizer,
+    });
+
+    expect(result.platform).toBe(validOrder.platform);
+    expect(regexParser).toHaveBeenCalledTimes(1);
+    expect(categorizer).toHaveBeenCalledTimes(1);
+    expect(client.messages.create).not.toHaveBeenCalled();
+  });
+
+  it2("falls back to Claude when regex parser returns null", async () => {
+    const goodOrder = makeOrder();
+    const regexParser = vi.fn().mockReturnValue(null);
+    const categorizer = vi.fn();
+    const client = {
+      messages: {
+        create: vi.fn().mockResolvedValue(makeToolUseResponse(goodOrder)),
+      },
+    };
+    const pdfText = vi.fn().mockResolvedValue("x".repeat(500));
+
+    await extractInvoice(validPdfBuffer(), { client, pdfText, regexParser, categorizer });
+
+    expect(categorizer).not.toHaveBeenCalled();
+    expect(client.messages.create).toHaveBeenCalledTimes(1); // Haiku ran
   });
 });

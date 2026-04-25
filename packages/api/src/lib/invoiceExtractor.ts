@@ -2,6 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { extractPdfText } from "./pdfText";
 import type { GroceryCategory, GroceryPlatform } from "./groceryCategories";
 import { GROCERY_CATEGORIES, GROCERY_PLATFORMS } from "./groceryCategories";
+import { parseInvoice } from "./parsers/index";
+import { categorizeItems } from "./categorizer";
 
 export interface ParsedGroceryItem {
   name: string;
@@ -199,6 +201,8 @@ export interface AnthropicLike {
 export interface ExtractInvoiceDeps {
   client?: AnthropicLike;
   pdfText?: (buffer: Buffer) => Promise<string>;
+  regexParser?: (text: string) => ParsedGroceryOrder | null;
+  categorizer?: (names: string[], client: AnthropicLike) => Promise<GroceryCategory[]>;
 }
 
 let sharedClient: AnthropicLike | null = null;
@@ -279,6 +283,47 @@ export async function extractInvoice(
       skipped: true,
       reason: `pdf_text_extraction_failed: ${sanitizeReason(err)}`,
     });
+  }
+
+  // Stage 0: regex parser (fast path — no Claude call for parsing)
+  if (text.length >= MIN_TEXT_LENGTH) {
+    const regexParseFn = deps.regexParser ?? parseInvoice;
+    const categorizerFn = deps.categorizer ?? categorizeItems;
+    const regexStart = Date.now();
+    try {
+      const regexParsed = regexParseFn(text);
+      if (regexParsed) {
+        const v = validate(regexParsed);
+        logExtraction({
+          path: "regex",
+          durationMs: Date.now() - regexStart,
+          validationOk: v.ok,
+        });
+        if (v.ok) {
+          try {
+            const names = regexParsed.items.map((it) => it.name);
+            const categories = await categorizerFn(names, client);
+            return {
+              ...regexParsed,
+              items: regexParsed.items.map((it, idx) => ({
+                ...it,
+                groceryCategory: categories[idx] ?? "other",
+              })),
+            };
+          } catch (catErr) {
+            logExtraction({ path: "regex_categorize", warning: sanitizeReason(catErr) });
+            return regexParsed;
+          }
+        }
+      }
+    } catch (regexErr) {
+      logExtraction({
+        path: "regex",
+        durationMs: Date.now() - regexStart,
+        validationOk: false,
+        reason: sanitizeReason(regexErr),
+      });
+    }
   }
 
   const textPathEligible = text.length >= MIN_TEXT_LENGTH;
