@@ -1,0 +1,179 @@
+Tax Invoice
+Sold By / Seller
+BLINK COMMERCE PRIVATE LIMITED
+BLINK COMMERCE PRIVATE LIMITED - SS Pune Mhalunghe ES163
+Survey No 12/2/1, 12/2/2 Mahalunge, Tal Mulshi, Dist. Pune.411045
+Pune
+411045
+GSTIN : 27AAFCG9846E1ZB
+FSSAI License Number : 10018064001545
+CIN : U74140HR2015FTC055568
+PAN : AAFCG9846E
+Invoice Number : C491287T26003771
+Invoice To
+Name : Sushant Gawali
+Address : E-1004,Metrojazz
+Pin code : 411045
+State : Maharashtra
+Order Id : 1968518396
+Invoice
+Date
+: 14-Apr-2026
+Place of
+Supply
+: Maharashtra
+Sr. no UPC Item Description MRP Discount Qty. Taxable Value CGST (%) CGST (INR) SGST (%) SGST (INR) Cess (%) Additional Cess Val Total
+1 8901
+7640
+2227
+2
+Fanta Orange Soft
+Drink(PET Bottle)
+(HSN-22021090)
+40.00 0.00 1 28.57 20.00 5.71 20.00 5.71 0.00 0.00 40.00
+- Delivery and other
+charges
+- - - 1.54 20.00 0.31 20.00 0.31 0 0.00 2.15
+2 8901
+7640
+4227
+0
+Thums Up Soft
+Drink(PET Bottle)
+(HSN-22021010)
+40.00 1.00 1 27.86 20.00 5.57 20.00 5.57 0.00 0.00 39.00
+- Delivery and other
+charges
+- - - 1.50 20.00 0.30 20.00 0.30 0 0.00 2.10
+3 8906
+0806
+0267
+2
+Paper Boat Swing
+Slurpy Mango
+Mango Drink(PET
+Bottle) (HSN-
+22029020)
+40.00 0.00 1 38.10 2.50 0.95 2.50 0.95 0.00 0.00 40.00
+- Delivery and other
+charges
+- - - 2.05 2.50 0.05 2.50 0.05 0 0.00 2.15
+Total 3 12.89 12.89 125.40
+Amount in
+Words:
+One Hundred And Twenty-Five Rupees And Forty Paisa Only
+Blink Commerce Private Limited(formerly known as Grofers India Private Limited)
+GSTIN 27AAFCG9846E1ZB FSSAI License Number 10018064001545
+CIN U74140HR2015FTC055568 PAN AAFCG9846E
+Authorised Signatory
+Whether the tax is payable on reverse charge - No
+Terms & Conditions:
+1. If you have any issues or queries in respect of your order, please contact customer chat support through Blinkit platform or drop in email at
+info@blinkit.com
+2. In case you need to get more information about seller's or Blinkit's FSSAI status, please visit https://foscos.fssai.gov.in/ and use the FBO search option with
+FSSAI License / Registration number.
+3. Please note that we never ask for bank account details such as CVV, account number, UPI Pin, etc. across our support channels. For your safety please do
+not share these details with anyone over any medium.
+4. MRP displayed on the platform is as printed on the product package. Actual MRP and amount payable may be a function of offers/ discounts and/ or the
+revised GST rates made effective by Govt. from 22 Sep 2025 onwards.
+5. Delivery & other charges are ancillary to the principal supply of items/goods, wherever applicable.
+Annexure
+S.No. Nature of charge Tax Rate Cess Rate Taxable Value CGST SGST Cess
+1 Handling charge
+40.00 0.00 3.037 0.607 0.607 0.000
+5.00 0.00 2.050 0.051 0.051 0.000
+Total 5.087 0.659 0.659 0.000
+
+Tax Invoice
+Sold By / Seller
+ZOMATO HYPERPURE PRIVATE LIMITED
+ZHPL - SS Pune Mhalunghe ES163
+Survey No 12/2/1, 12/2/2 Mahalunge, Tal Mulshi, Dist. Pune.411045
+Pune
+411045
+GSTIN : 27AAACZ8867B1Z0
+FSSAI License Number : 10020064002537
+CIN : U74900DL2015PTC286208
+PAN : AAACZ8867B
+Invoice Number : C491286T26002838
+Invoice To
+Name : Sushant Gawali
+Address : E-1004,Metrojazz
+Pin code : 411045
+State : Maharashtra
+Order Id : 1968518396
+Invoice
+Date
+: 14-Apr-2026
+Place of
+Supply
+: Maharashtra
+Sr. no UPC Item Description MRP Discount Qty. Taxable Value CGST (%) CGST (INR) SGST (%) SGST (INR) Cess (%) Additional Cess Val Total
+1 8906
+0845
+2179
+5
+Desi Farms Malai
+Paneer(Pouch)
+(HSN-04061000)
+96.00 16.00 1 80.00 0.00 0.00 0.00 0.00 0.00 0.00 80.00
+2 3602
+6030
+0200
+0
+Spinach(Pack)
+(HSN-07041000)
+24.00 0.00 1 24.00 0.00 0.00 0.00 0.00 0.00 0.00 24.00
+Total 2 104.00
+Amount in
+Words:
+One Hundred And Four Rupees And Zero Paisa Only
+Blink Commerce Private Limited(formerly known as Grofers India Private Limited)
+GSTIN 27AAFCG9846E1ZB FSSAI License Number 10018064001545
+CIN U74140HR2015FTC055568 PAN AAFCG9846E
+Authorised Signatory
+Whether the tax is payable on reverse charge - No
+Terms & Conditions:
+1. If you have any issues or queries in respect of your order, please contact customer chat support through Blinkit platform or drop in email at
+info@blinkit.com
+2. In case you need to get more information about seller's or Blinkit's FSSAI status, please visit https://foscos.fssai.gov.in/ and use the FBO search option with
+FSSAI License / Registration number.
+3. Please note that we never ask for bank account details such as CVV, account number, UPI Pin, etc. across our support channels. For your safety please do
+not share these details with anyone over any medium.
+4. MRP displayed on the platform is as printed on the product package. Actual MRP and amount payable may be a function of offers/ discounts and/ or the
+revised GST rates made effective by Govt. from 22 Sep 2025 onwards.
+
+Tax Invoice
+Sold By
+Blink Commerce Private Limited
+Ground Floor, Portion of Survey No. 2/1/1A, Khata No. 5693, Near Raghav
+Mandal Karyalaya, Gaikwad Nagar, Dighi, Haveli, Pune - 411015
+GSTIN : 27AAFCG9846E1ZB
+FSSAI License Number : 10018064001545
+CIN : U74140HR2015FTC055568
+PAN : AAFCG9846E
+Invoice Number: MHFI270004450775
+Invoice To
+Name : Sushant Gawali
+Address : E-1004, Metrojazz, , Maharashtra, 411045
+Pincode : 411045
+Order Id : ORD38631533033
+Invoice Date : 14-04-2026
+Place of Supply : Maharashtra
+Sr. no HSN Code Item Description MRP Discount Qty. Taxable Value CGST (%) CGST (INR) SGST (%) SGST (INR) Total
+1 998549 Handling charge 5.600 0 1 4.750 9 0.430 9 0.430 5.600
+Total 0 1 4.750 0.430 0.430 5.600
+Amount in Words: Five Rupees And Sixty Paisa Only
+For Blink Commerce Private Limited
+Authorised Signatory
+Delivery confirmation OTP:
+Whether the tax is payable on reverse charge - No
+Terms & Conditions:
+1. If you have any issues or queries in respect of your order, please contact customer chat support through the Blinkit platform
+or drop in email at info@blinkit.com.
+2. In case you need to get more information about the seller's FSSAI status, please visit https://foscos.fssai.gov.in/ and use the
+FBO search option with the FSSAI License / Registration number.
+3. Please note that we never ask for bank account details such as CVV, account number, UPI Pin, etc. across our support
+channels. For your safety please do not share these details with anyone over any medium.
+4. MRP displayed on the platform is as printed on the product package. Actual MRP and amount payable may be a function of
+offers/ discounts and/ or the revised GST rates made effective by Govt. from 22 Sep 2025 onwards.

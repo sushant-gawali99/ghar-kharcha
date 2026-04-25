@@ -1,0 +1,163 @@
+Seller Name: Drogheria Sellers Private Limited
+SR.NO.26/1/31,NANDE-MAHALU NGE ROAD,MAHALUNGE PUNE MHALUNGE 411045
+GSTIN: 27AAJCD2242F1ZW
+FSSAI: 11522998001570
+TAX INVOICE/BILL OF SUPPLY
+Invoice No.: 260427D006540692
+Order No.: KRGOPLUB91775A
+Place Of Supply : MAHARASTRA (27)
+Date : 13-04-2026
+Bill To Ship To
+Sushant
+E 1004, Floor 10 , E Block, Metrojazz, Opposite balewadi stadium,
+Metro Jazz Block-E, METRO JAZZ, Mahalunge, Pune, Maharashtra
+411045, India
+E 1004, Floor 10 , E Block, Metrojazz, Opposite balewadi stadium,
+Metro Jazz Block-E, METRO JAZZ, Mahalunge, Pune, Maharashtra
+411045, India
+SR
+No
+Item &
+Description
+Unit
+MRP/RSP 
+HSN Qty 
+Product
+Rate 
+Disc. 
+Taxable
+Amt. 
+CGST 
+S/UT
+GST
+CGST
+Amt.
+S/UT
+GST
+Amt.
+Cess 
+Cess
+Amt.
+Total
+Amt.
+1
+Amul Taaza
+Homogenised
+Toned Milk
+(Tetra Pack)
+1 pack (200
+ml)
+17.00 04012000 3 17.00 0.00% 51.00 0.00% 0.00% 0.00 0.00 
+0.00%
++ 0.00 
+0.00 51.00
+2
+Capsicum
+Red &
+Yellow 2 pcs
+81.00 09041190 1 81.00 33.33% 54.00 0.00% 0.00% 0.00 0.00 
+0.00%
++ 0.00 
+0.00 54.00
+3
+Chheda's
+Nylon Sev |
+Light &
+Crispy
+Namkeen 1
+pack (170 g)
+52.00 21069099 1 49.52 11.53% 43.81 2.50% 2.50% 1.10 1.10 
+0.00%
++ 0.00 
+0.00 46.00
+4
+Amul Salted
+Butter 1 pack
+(500 g)
+295.00 04051000 1 280.93 0.67% 279.05 2.50% 2.50% 6.98 6.98 
+0.00%
++ 0.00 
+0.00 293.00
+5 Broccoli 1 pc 38.00 07099990 1 38.00 26.31% 28.00 0.00% 0.00% 0.00 0.00 
+0.00%
++ 0.00 
+0.00 28.00
+6
+Alt Co. Oat
+Drink 1 pc (1
+L)
+266.00 22029090 1 253.33 10.15% 227.62 2.50% 2.50% 5.69 5.69 
+0.00%
++ 0.00 
+0.00 239.00
+7
+Chitale Dahi
+Pouch 1 pack
+(400 g)
+37.00 04039090 1 35.24 2.70% 34.29 2.50% 2.50% 0.86 0.86
+0.00%
++ 0.00 
+0.00 36.00
+8
+Modern Zero
+Maida Rusk
+1 pack (300
+g)
+95.00 19054000 1 90.47 35.78% 58.10 2.50% 2.50% 1.45 1.45 
+0.00%
++ 0.00 
+0.00 61.00
+
+9
+Desi Farms
+Plain Chaas
+Bottle 1 pc (1
+L)
+50.00 04039010 1 47.62 22.00% 37.14 2.50% 2.50% 0.93 0.93 
+0.00%
++ 0.00 
+0.00 39.00
+813.01 17.01 17.01 0.00 847.03
+SR
+No
+Item &
+Description
+Unit
+MRP/RSP 
+HSN Qty 
+Product
+Rate 
+Disc. 
+Taxable
+Amt. 
+CGST 
+S/UT
+GST
+CGST
+Amt.
+S/UT
+GST
+Amt.
+Cess 
+Cess
+Amt.
+Total
+Amt.
+Item Total 847.03
+Invoice Value 847.03
+Whether GST is payable on reverse-charge - No.
+For IMEI / Serial number information, please refer to packaging / warranty slip.
+Note: Effective 1st Feb 2026, The valuation of the tobacco and pan masala products is made in
+accordance with Rule 31D of the CGST Rules, 2017
+Order Delivered From -
+Zepto Limited (Formerly known as Zepto Private Limited and Kiranakart
+Technologies Private Limited)
+SR.NO.26/1/31,NANDE-MAHALU NGE ROAD,MAHALUNGE PUNE
+MHALUNGE 411045
+FSSAI: 11524083001029
+E-commerce Platform (FBO) Information -
+ZEPTO MARKETPLACE PRIVATE LIMITED
+First Floor, 773, Sarjapur Main Road, Kaikondarahalli, Bellandur, Bangalore,
+Karnataka, India 560103
+FSSAI Lic. No: 11224999000872
+Email: support@zeptonow.com
