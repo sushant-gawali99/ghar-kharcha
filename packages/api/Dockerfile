@@ -1,4 +1,5 @@
 FROM node:22-alpine AS base
+# Cache-bust marker: 2026-04-25 — bumped to pick up react-server-dom-webpack 19.2.5.
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
