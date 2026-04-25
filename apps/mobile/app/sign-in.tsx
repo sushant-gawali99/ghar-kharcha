@@ -156,7 +156,21 @@ export default function SignInScreen() {
 
       const { accessToken, refreshToken, user } = await res.json();
       await setSession(accessToken, refreshToken, user);
-      router.replace("/(auth)/(tabs)/home");
+
+      // Route newcomers through onboarding; regulars straight to home.
+      let nextRoute: "/(auth)/(tabs)/home" | "/onboarding" = "/(auth)/(tabs)/home";
+      try {
+        const meRes = await fetch(`${API_BASE}/api/me`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (meRes.ok) {
+          const me = (await meRes.json()) as { onboardedAt: string | null };
+          if (!me.onboardedAt) nextRoute = "/onboarding";
+        }
+      } catch {
+        // fall through to home
+      }
+      router.replace(nextRoute);
     } catch (err: any) {
       if (err?.code === statusCodes.SIGN_IN_CANCELLED) return;
       Alert.alert(

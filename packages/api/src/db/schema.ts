@@ -38,6 +38,7 @@ export const users = pgTable("users", {
   householdId: uuid("household_id").references(() => households.id, {
     onDelete: "set null",
   }),
+  onboardedAt: timestamp("onboarded_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

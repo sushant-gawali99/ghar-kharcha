@@ -55,6 +55,7 @@ me.get("/", async (c) => {
     name: row.name,
     avatarUrl: row.avatarUrl,
     householdId: row.householdId,
+    onboardedAt: row.onboardedAt ? row.onboardedAt.toISOString() : null,
     monthlyBudget,
     stats: {
       totalInvoices: Number(totals?.totalInvoices ?? 0),
@@ -73,17 +74,19 @@ me.patch(
         .union([z.number().nonnegative(), z.null()])
         .optional(),
       name: z.string().trim().min(1).max(120).optional(),
+      onboarded: z.boolean().optional(),
     }),
   ),
   async (c) => {
     const userId = c.get("userId");
     const body = c.req.valid("json");
 
-    if (body.name !== undefined) {
-      await db
-        .update(users)
-        .set({ name: body.name, updatedAt: new Date() })
-        .where(eq(users.id, userId));
+    const userUpdate: { name?: string; onboardedAt?: Date | null; updatedAt?: Date } = {};
+    if (body.name !== undefined) userUpdate.name = body.name;
+    if (body.onboarded === true) userUpdate.onboardedAt = new Date();
+    if (Object.keys(userUpdate).length > 0) {
+      userUpdate.updatedAt = new Date();
+      await db.update(users).set(userUpdate).where(eq(users.id, userId));
     }
 
     if (body.monthlyBudget !== undefined) {
@@ -118,6 +121,7 @@ me.patch(
       name: row.name,
       avatarUrl: row.avatarUrl,
       householdId: row.householdId,
+      onboardedAt: row.onboardedAt ? row.onboardedAt.toISOString() : null,
       monthlyBudget,
     });
   },
