@@ -18,8 +18,7 @@ import { View } from "react-native";
 import { useEffect } from "react";
 import { useAuthStore } from "@/lib/auth";
 import * as Linking from "expo-linking";
-import * as FileSystem from "expo-file-system";
-import { usePendingPdfStore } from "@/stores/pendingPdfStore";
+import { handleIncomingPdfUri } from "@/lib/handleIncomingPdfUri";
 import { PdfConfirmSheet } from "@/components/PdfConfirmSheet";
 
 const queryClient = new QueryClient();
@@ -43,19 +42,10 @@ export default function RootLayout() {
   }, []);
 
   useEffect(() => {
-    const handleIncomingUri = async (uri: string | null) => {
-      if (!uri?.startsWith("content://")) return;
-      try {
-        const dest = FileSystem.cacheDirectory + "pending-invoice.pdf";
-        await FileSystem.copyAsync({ from: uri, to: dest });
-        usePendingPdfStore.getState().setPending(dest);
-      } catch (err) {
-        console.warn("[PDF intent] failed to copy file:", err);
-      }
-    };
-
-    Linking.getInitialURL().then(handleIncomingUri);
-    const sub = Linking.addEventListener("url", ({ url }) => handleIncomingUri(url));
+    Linking.getInitialURL().then(handleIncomingPdfUri).catch((err) => {
+      console.warn("[PDF intent] getInitialURL failed:", err);
+    });
+    const sub = Linking.addEventListener("url", ({ url }) => handleIncomingPdfUri(url));
     return () => sub.remove();
   }, []);
 
