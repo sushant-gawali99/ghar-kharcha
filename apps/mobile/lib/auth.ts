@@ -37,6 +37,29 @@ export type User = {
   avatarUrl: string | null;
 };
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split(".");
+  if (parts.length < 2) return null;
+
+  try {
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const decode = Platform.OS === "web" ? atob : globalThis.atob;
+    if (!decode) return null;
+    const json = decode(padded);
+    return JSON.parse(json) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function isTokenExpired(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  const exp = payload?.exp;
+  if (typeof exp !== "number") return false;
+  return exp * 1000 <= Date.now();
+}
+
 type AuthState = {
   accessToken: string | null;
   user: User | null;
@@ -71,6 +94,13 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   loadSession: async () => {
     const accessToken = await storage.getItem(ACCESS_TOKEN_KEY);
+    if (accessToken && isTokenExpired(accessToken)) {
+      await storage.deleteItem(ACCESS_TOKEN_KEY);
+      await storage.deleteItem(REFRESH_TOKEN_KEY);
+      await storage.deleteItem(USER_KEY);
+      set({ accessToken: null, user: null, isAuthenticated: false });
+      return;
+    }
     const userJson = await storage.getItem(USER_KEY);
     const user = userJson ? (JSON.parse(userJson) as User) : null;
     set({ accessToken, user, isAuthenticated: !!accessToken });

@@ -17,3 +17,12 @@ coverage/
 # IDE
 .idea/
 .vscode/
+.cursor/
+
+# Runtime upload dir and scratch
+tmp-uploads/
+packages/api/scratch/
+
+# Local memory palace + cursor metadata
+entities.json
+mempalace.yaml
