@@ -16,5 +16,10 @@
     "node": ">=20",
     "pnpm": ">=9"
   },
-  "packageManager": "pnpm@10.33.0"
+  "packageManager": "pnpm@10.33.0",
+  "pnpm": {
+    "overrides": {
+      "react-server-dom-webpack": "^19.0.2"
+    }
+  }
 }
