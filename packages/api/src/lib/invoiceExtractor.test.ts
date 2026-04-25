@@ -287,6 +287,7 @@ desc2("extractInvoice orchestration", () => {
     expect(regexParser).toHaveBeenCalledTimes(1);
     expect(categorizer).toHaveBeenCalledTimes(1);
     expect(client.messages.create).not.toHaveBeenCalled();
+    expect(result.items[0].groceryCategory).toBe("dairy");
   });
 
   it2("falls back to Claude when regex parser returns null", async () => {
@@ -304,5 +305,23 @@ desc2("extractInvoice orchestration", () => {
 
     expect(categorizer).not.toHaveBeenCalled();
     expect(client.messages.create).toHaveBeenCalledTimes(1); // Haiku ran
+  });
+
+  it2("falls back to Claude when regex parser returns an order that fails validate()", async () => {
+    const invalidRegexOrder = makeOrder({ invoiceNo: "" }); // empty invoiceNo fails validate()
+    const goodOrder = makeOrder();
+    const regexParser = vi.fn().mockReturnValue(invalidRegexOrder);
+    const categorizer = vi.fn();
+    const client = {
+      messages: {
+        create: vi.fn().mockResolvedValue(makeToolUseResponse(goodOrder)),
+      },
+    };
+    const pdfText = vi.fn().mockResolvedValue("x".repeat(500));
+
+    await extractInvoice(validPdfBuffer(), { client, pdfText, regexParser, categorizer });
+
+    expect2(categorizer).not.toHaveBeenCalled();
+    expect2(client.messages.create).toHaveBeenCalledTimes(1); // Claude ran as fallback
   });
 });
