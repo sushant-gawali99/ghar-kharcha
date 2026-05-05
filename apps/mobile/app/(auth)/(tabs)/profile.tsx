@@ -496,6 +496,47 @@ export default function ProfileScreen() {
     }
   };
 
+  const deleteAccount = async () => {
+    try {
+      const res = await authFetch("/api/me", { method: "DELETE" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      await clearSession();
+      router.replace("/sign-in");
+    } catch (err) {
+      Alert.alert("Couldn't delete account", err instanceof Error ? err.message : "Please try again.");
+    }
+  };
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      "Delete account?",
+      "This permanently removes your profile, invoices, parsed orders, items, uploads, and sign-in tokens.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", style: "destructive", onPress: deleteAccount },
+      ],
+    );
+  };
+
+  const exportData = async () => {
+    try {
+      const res = await authFetch("/api/me/export");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      const body = await res.json();
+      await Share.share({
+        message: JSON.stringify(body, null, 2),
+      });
+    } catch (err) {
+      Alert.alert("Couldn't export data", err instanceof Error ? err.message : "Please try again.");
+    }
+  };
+
   const firstName = user?.name?.trim().split(/\s+/)[0] ?? "";
   const initial = firstName ? firstName.charAt(0).toUpperCase() : "?";
   const budgetLabel =
@@ -586,6 +627,13 @@ export default function ProfileScreen() {
         <SettingsGroup title="Household · घर">
           <SettingRow label="Monthly budget" detail={budgetLabel} onPress={() => setBudgetModalOpen(true)} />
           <SettingRow label="Pantry staples" detail="Coming soon" />
+        </SettingsGroup>
+
+        <SettingsGroup title="Privacy">
+          <SettingRow label="Privacy policy" onPress={() => router.push("/privacy")} />
+          <SettingRow label="Terms" onPress={() => router.push("/terms")} />
+          <SettingRow label="Export data" onPress={exportData} />
+          <SettingRow label="Delete account" onPress={confirmDeleteAccount} />
         </SettingsGroup>
 
         {/* ── Your household members ── */}

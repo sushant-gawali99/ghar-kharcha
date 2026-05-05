@@ -2,13 +2,34 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
+import { randomInt } from "node:crypto";
 import { db } from "../db/index";
 import { users, households, householdInvites } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
+import { rateLimit } from "../middleware/rateLimit";
+import { logAuditEvent } from "../lib/audit";
 
 const household = new Hono<{ Variables: AuthVariables }>();
 
 household.use(authMiddleware);
+household.use(
+  "/invites",
+  rateLimit({
+    keyPrefix: "household_invites",
+    windowMs: 60_000,
+    max: 20,
+    key: (c) => String(c.get("userId")),
+  }),
+);
+household.use(
+  "/invites/*",
+  rateLimit({
+    keyPrefix: "household_invites",
+    windowMs: 60_000,
+    max: 20,
+    key: (c) => String(c.get("userId")),
+  }),
+);
 
 const INVITE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 const INVITE_CODE_LENGTH = 6;
@@ -17,7 +38,7 @@ const INVITE_TTL_DAYS = 7;
 function generateInviteCode(): string {
   let out = "";
   for (let i = 0; i < INVITE_CODE_LENGTH; i++) {
-    out += INVITE_CODE_ALPHABET[Math.floor(Math.random() * INVITE_CODE_ALPHABET.length)];
+    out += INVITE_CODE_ALPHABET[randomInt(INVITE_CODE_ALPHABET.length)];
   }
   return out;
 }
@@ -106,6 +127,10 @@ household.post("/invites", async (c) => {
           expiresAt: inviteExpiry(),
         })
         .returning();
+      await logAuditEvent(userId, "household.invite_created", {
+        inviteId: row.id,
+        householdId,
+      });
       return c.json({
         id: row.id,
         code: row.code,
@@ -188,6 +213,11 @@ household.post(
         }
       }
     });
+    await logAuditEvent(userId, "household.invite_accepted", {
+      inviteId: invite.id,
+      householdId: invite.householdId,
+      inviterId: invite.inviterId,
+    });
 
     return c.json({ householdId: invite.householdId });
   },
@@ -221,6 +251,10 @@ household.delete("/members/:id", async (c) => {
       .update(users)
       .set({ householdId: fresh.id, updatedAt: new Date() })
       .where(eq(users.id, targetId));
+  });
+  await logAuditEvent(userId, "household.member_removed", {
+    householdId,
+    targetId,
   });
 
   return c.json({ ok: true });

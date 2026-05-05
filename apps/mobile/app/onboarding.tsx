@@ -285,6 +285,7 @@ export default function OnboardingScreen() {
         name: file.name,
         type: file.mimeType ?? "application/pdf",
       } as unknown as Blob);
+      formData.append("aiProcessingConsent", "true");
       const res = await authFetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -547,6 +548,9 @@ export default function OnboardingScreen() {
           </Text>
           <Text style={{ fontFamily: FONTS.sans, fontSize: 15, color: T.ink3, marginTop: 14, lineHeight: 22 }}>
             Upload a photo or PDF of any recent grocery bill — from Blinkit, Zepto, BigBasket, Instamart, or a paper receipt. We'll read the items and prices for you.
+          </Text>
+          <Text style={{ fontFamily: FONTS.sans, fontSize: 12, color: T.ink3, marginTop: 8, lineHeight: 18 }}>
+            Uploading consents to AI processing of invoice text, and sometimes the file, for parsing.
           </Text>
 
           <View

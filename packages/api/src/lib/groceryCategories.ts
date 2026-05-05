@@ -4,6 +4,7 @@
 export const GROCERY_PLATFORMS = [
   "zepto",
   "swiggy_instamart",
+  "blinkit",
   "other",
 ] as const;
 

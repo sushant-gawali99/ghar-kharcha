@@ -3,9 +3,11 @@ import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { and, asc, desc, eq, gte, inArray, lt, sql } from "drizzle-orm";
 import { db } from "../db/index";
-import { orders as ordersTable, orderItems } from "../db/schema";
+import { orders as ordersTable, orderItems, uploads } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
 import { getHouseholdMemberIds } from "../lib/household";
+import { deleteUpload } from "../lib/uploadStorage";
+import { logAuditEvent } from "../lib/audit";
 
 const orders = new Hono<{ Variables: AuthVariables }>();
 
@@ -41,7 +43,7 @@ orders.get(
         .string()
         .regex(/^\d{4}-\d{2}$/)
         .optional(),
-      platform: z.enum(["zepto", "swiggy_instamart", "other"]).optional(),
+      platform: z.enum(["zepto", "swiggy_instamart", "blinkit", "other"]).optional(),
     }),
   ),
   async (c) => {
@@ -216,6 +218,47 @@ orders.get("/:id", async (c) => {
       category: it.category ?? "other",
     })),
   });
+});
+
+orders.delete("/:id", async (c) => {
+  const userId = c.get("userId");
+  const memberIds = await getHouseholdMemberIds(userId);
+  const id = c.req.param("id");
+
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return c.json({ error: "Invalid order id" }, 400);
+  }
+
+  const order = await db.query.orders.findFirst({
+    where: and(eq(ordersTable.id, id), inArray(ordersTable.userId, memberIds)),
+  });
+
+  if (!order) {
+    return c.json({ error: "Order not found" }, 404);
+  }
+
+  const upload = order.uploadId
+    ? await db.query.uploads.findFirst({
+        where: and(eq(uploads.id, order.uploadId), inArray(uploads.userId, memberIds)),
+      })
+    : null;
+
+  await db.transaction(async (tx) => {
+    await tx.delete(ordersTable).where(eq(ordersTable.id, id));
+    if (upload) {
+      await tx.delete(uploads).where(eq(uploads.id, upload.id));
+    }
+  });
+
+  if (upload) {
+    await deleteUpload(upload.storageKey);
+  }
+  await logAuditEvent(userId, "order.deleted", {
+    orderId: order.id,
+    uploadId: upload?.id ?? null,
+  });
+
+  return c.json({ ok: true });
 });
 
 export { orders };

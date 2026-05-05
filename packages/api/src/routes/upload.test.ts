@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { uploads, orders, orderItems, users } from "../db/schema";
+import { auditEvents, uploads, orders, orderItems, users } from "../db/schema";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { ParsedGroceryOrder } from "../lib/invoiceExtractor";
@@ -78,6 +78,7 @@ function makeFormData(buffer: Buffer): FormData {
   const fd = new FormData();
   const blob = new Blob([new Uint8Array(buffer)], { type: "application/pdf" });
   fd.append("file", new File([blob], "invoice.pdf", { type: "application/pdf" }));
+  fd.append("aiProcessingConsent", "true");
   return fd;
 }
 
@@ -91,6 +92,7 @@ describe("POST /api/upload", () => {
     await db.delete(orderItems);
     await db.delete(orders);
     await db.delete(uploads);
+    await db.delete(auditEvents);
     await db.delete(users);
   });
 
@@ -161,5 +163,21 @@ describe("POST /api/upload", () => {
     });
     expect(row?.status).toBe("failed");
     expect(row?.errorMessage).toMatch(/test failure/);
+  });
+
+  it("requires explicit AI processing consent", async () => {
+    const userId = await makeTestUser();
+    const fd = new FormData();
+    const blob = new Blob([new Uint8Array(makePdfBuffer())], { type: "application/pdf" });
+    fd.append("file", new File([blob], "invoice.pdf", { type: "application/pdf" }));
+
+    const res = await app.request("/api/upload", {
+      method: "POST",
+      headers: { "x-test-user-id": userId },
+      body: fd,
+    });
+
+    expect(res.status).toBe(428);
+    expect(mockedExtract).not.toHaveBeenCalled();
   });
 });

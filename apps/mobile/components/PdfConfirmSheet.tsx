@@ -16,6 +16,7 @@ type SheetState = 'idle' | 'parsing' | 'duplicate' | 'error';
 
 export function PdfConfirmSheet() {
   const pendingUri = usePendingPdfStore((s) => s.pendingUri);
+  const pendingFileName = usePendingPdfStore((s) => s.pendingFileName);
   const clearPending = usePendingPdfStore((s) => s.clearPending);
   const [state, setState] = useState<SheetState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -32,7 +33,7 @@ export function PdfConfirmSheet() {
 
   if (!pendingUri) return null;
 
-  const fileName = pendingUri.split('/').pop() ?? 'invoice.pdf';
+  const fileName = pendingFileName ?? pendingUri.split('/').pop() ?? 'invoice.pdf';
 
   const handleConfirm = async () => {
     setState('parsing');
@@ -43,6 +44,7 @@ export function PdfConfirmSheet() {
         name: fileName,
         type: 'application/pdf',
       } as unknown as Blob);
+      formData.append('aiProcessingConsent', 'true');
       const res = await authFetch('/api/upload', { method: 'POST', body: formData });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -89,7 +91,7 @@ export function PdfConfirmSheet() {
                 </View>
               </View>
               <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: T.ink2, marginBottom: 20 }}>
-                Add this invoice to your expense tracker?
+                Add this invoice to your expense tracker? This consents to AI processing of invoice text, and sometimes the PDF, for parsing.
               </Text>
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Pressable onPress={handleDismiss} style={{ flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: T.card, alignItems: 'center' }}>

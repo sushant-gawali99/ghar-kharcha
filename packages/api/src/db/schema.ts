@@ -4,7 +4,7 @@ import {
   text,
   timestamp,
   numeric,
-  integer,
+  jsonb,
   pgEnum,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -20,6 +20,7 @@ export const uploadStatusEnum = pgEnum("upload_status", [
 export const platformEnum = pgEnum("platform", [
   "zepto",
   "swiggy_instamart",
+  "blinkit",
   "other",
 ]);
 
@@ -39,6 +40,9 @@ export const users = pgTable("users", {
     onDelete: "set null",
   }),
   onboardedAt: timestamp("onboarded_at"),
+  termsAcceptedAt: timestamp("terms_accepted_at"),
+  privacyAcceptedAt: timestamp("privacy_accepted_at"),
+  aiProcessingConsentAt: timestamp("ai_processing_consent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -65,8 +69,27 @@ export const refreshTokens = pgTable("refresh_tokens", {
   userId: uuid("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  familyId: uuid("family_id").notNull().defaultRandom(),
   tokenHash: text("token_hash").notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const usedRefreshTokens = pgTable("used_refresh_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  familyId: uuid("family_id").notNull(),
+  tokenHash: text("token_hash").notNull().unique(),
+  usedAt: timestamp("used_at").notNull().defaultNow(),
+});
+
+export const auditEvents = pgTable("audit_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  action: text("action").notNull(),
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

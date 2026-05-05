@@ -1,20 +1,28 @@
 import { Hono } from "hono";
 import { eq, and, inArray } from "drizzle-orm";
-import { mkdir, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import path from "node:path";
 import { db } from "../db/index";
-import { uploads, orders, orderItems } from "../db/schema";
+import { uploads, orders, orderItems, users } from "../db/schema";
 import { authMiddleware, type AuthVariables } from "../middleware/auth";
 import { extractInvoice, InvoiceExtractionError } from "../lib/invoiceExtractor";
 import { getHouseholdMemberIds } from "../lib/household";
+import { writeUpload } from "../lib/uploadStorage";
+import { rateLimit } from "../middleware/rateLimit";
+import { logAuditEvent } from "../lib/audit";
 
 const upload = new Hono<{ Variables: AuthVariables }>();
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "/data/uploads";
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
 
 upload.use(authMiddleware);
+upload.use(
+  rateLimit({
+    keyPrefix: "upload",
+    windowMs: 60 * 60 * 1000,
+    max: 10,
+    key: (c) => String(c.get("userId")),
+  }),
+);
 
 upload.post("/", async (c) => {
   const userId = c.get("userId");
@@ -30,6 +38,15 @@ upload.post("/", async (c) => {
   if (!(fileEntry instanceof File)) {
     return c.json({ error: "Missing file field" }, 400);
   }
+
+  if (formData.get("aiProcessingConsent") !== "true") {
+    return c.json({ error: "AI processing consent is required for invoice upload" }, 428);
+  }
+
+  await db
+    .update(users)
+    .set({ aiProcessingConsentAt: new Date(), updatedAt: new Date() })
+    .where(eq(users.id, userId));
 
   if (fileEntry.type && fileEntry.type !== "application/pdf") {
     return c.json({ error: "Only PDF files are accepted" }, 415);
@@ -48,9 +65,7 @@ upload.post("/", async (c) => {
   // Persist the raw PDF first so we always have an audit trail.
   const uploadId = randomUUID();
   const storageKey = `${userId}/${uploadId}.pdf`;
-  const absPath = path.join(UPLOAD_DIR, storageKey);
-  await mkdir(path.dirname(absPath), { recursive: true });
-  await writeFile(absPath, buffer);
+  await writeUpload(storageKey, buffer);
 
   const [uploadRow] = await db
     .insert(uploads)
@@ -78,6 +93,10 @@ upload.post("/", async (c) => {
       .update(uploads)
       .set({ status: "failed", errorMessage: message })
       .where(eq(uploads.id, uploadRow.id));
+    await logAuditEvent(userId, "upload.failed", {
+      uploadId: uploadRow.id,
+      reason: message,
+    });
     return c.json({ error: message, uploadId: uploadRow.id }, 422);
   }
 
@@ -89,6 +108,10 @@ upload.post("/", async (c) => {
         errorMessage: "Could not extract invoice number",
       })
       .where(eq(uploads.id, uploadRow.id));
+    await logAuditEvent(userId, "upload.failed", {
+      uploadId: uploadRow.id,
+      reason: "Could not extract invoice number",
+    });
     return c.json(
       { error: "Could not extract invoice number", uploadId: uploadRow.id },
       422
@@ -106,6 +129,11 @@ upload.post("/", async (c) => {
       .update(uploads)
       .set({ status: "duplicate" })
       .where(eq(uploads.id, uploadRow.id));
+    await logAuditEvent(userId, "upload.duplicate", {
+      uploadId: uploadRow.id,
+      invoiceNo: parsed.invoiceNo,
+      existingOrderId: existingOrder.id,
+    });
     return c.json({
       uploadId: uploadRow.id,
       status: "duplicate",
@@ -162,6 +190,12 @@ upload.post("/", async (c) => {
     .update(uploads)
     .set({ status: "success" })
     .where(eq(uploads.id, uploadRow.id));
+  await logAuditEvent(userId, "upload.success", {
+    uploadId: uploadRow.id,
+    orderId,
+    invoiceNo: parsed.invoiceNo,
+    platform: parsed.platform,
+  });
 
   return c.json(
     {

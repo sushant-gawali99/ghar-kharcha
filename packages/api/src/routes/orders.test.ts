@@ -2,8 +2,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Hono } from "hono";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { access } from "node:fs/promises";
 import { db } from "../db/index";
-import { orders as ordersTable, orderItems, users, uploads } from "../db/schema";
+import { auditEvents, orders as ordersTable, orderItems, users, uploads } from "../db/schema";
+import { uploadPathFor, writeUpload } from "../lib/uploadStorage";
 
 vi.mock("../middleware/auth", () => ({
   authMiddleware: async (
@@ -31,11 +33,13 @@ async function makeOrder(params: {
   orderedAt: Date;
   total: number;
   items: { name: string; quantity: number; totalAmount: number; category: string }[];
+  uploadId?: string | null;
 }) {
   const [row] = await db
     .insert(ordersTable)
     .values({
       userId: params.userId,
+      uploadId: params.uploadId ?? null,
       platform: params.platform,
       invoiceNo: `INV-${randomUUID().slice(0, 8)}`,
       orderedAt: params.orderedAt,
@@ -59,6 +63,29 @@ async function makeOrder(params: {
   return row.id;
 }
 
+async function makeUpload(userId: string): Promise<{ id: string; storageKey: string }> {
+  const id = randomUUID();
+  const storageKey = `${userId}/${id}.pdf`;
+  await writeUpload(storageKey, Buffer.from("%PDF-1.4\norder delete test", "utf8"));
+  await db.insert(uploads).values({
+    id,
+    userId,
+    filename: "invoice.pdf",
+    storageKey,
+    status: "success",
+  });
+  return { id, storageKey };
+}
+
+async function fileExists(storageKey: string): Promise<boolean> {
+  try {
+    await access(uploadPathFor(storageKey));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 describe("GET /api/orders", () => {
   const app = new Hono();
   app.route("/api/orders", orders);
@@ -67,6 +94,7 @@ describe("GET /api/orders", () => {
     await db.delete(orderItems);
     await db.delete(ordersTable);
     await db.delete(uploads);
+    await db.delete(auditEvents);
     await db.delete(users);
   });
 
@@ -117,6 +145,8 @@ describe("GET /api/orders", () => {
       ],
     });
 
+    const lastWeekInCurrentMonth = lastWeek.getUTCMonth() === now.getUTCMonth();
+
     // Only create an "earlier" order if it fits in the month and is before last week.
     const earlierFits = earlier < lastWeek;
     if (earlierFits) {
@@ -137,11 +167,13 @@ describe("GET /api/orders", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
 
-    expect(body.bills).toBe(earlierFits ? 3 : 2);
+    expect(body.bills).toBe(1 + (lastWeekInCurrentMonth ? 1 : 0) + (earlierFits ? 1 : 0));
 
     const labels = body.sections.map((s: { label: string }) => s.label);
     expect(labels).toContain("This week");
-    expect(labels).toContain("Last week");
+    if (lastWeekInCurrentMonth) {
+      expect(labels).toContain("Last week");
+    }
 
     const thisWeekSection = body.sections.find((s: { label: string }) => s.label === "This week");
     expect(thisWeekSection.orders).toHaveLength(1);
@@ -193,6 +225,7 @@ describe("GET /api/orders/:id", () => {
     await db.delete(orderItems);
     await db.delete(ordersTable);
     await db.delete(uploads);
+    await db.delete(auditEvents);
     await db.delete(users);
   });
 
@@ -248,6 +281,62 @@ describe("GET /api/orders/:id", () => {
     const res = await app.request(`/api/orders/${orderId}`, {
       headers: { "x-test-user-id": userB },
     });
+    expect(res.status).toBe(404);
+  });
+});
+
+describe("DELETE /api/orders/:id", () => {
+  const app = new Hono();
+  app.route("/api/orders", orders);
+
+  beforeEach(async () => {
+    await db.delete(orderItems);
+    await db.delete(ordersTable);
+    await db.delete(uploads);
+    await db.delete(auditEvents);
+    await db.delete(users);
+  });
+
+  it("deletes an order, its upload row, and the stored PDF", async () => {
+    const userId = await makeTestUser();
+    const upload = await makeUpload(userId);
+    const orderId = await makeOrder({
+      userId,
+      uploadId: upload.id,
+      platform: "zepto",
+      orderedAt: new Date(),
+      total: 100,
+      items: [{ name: "X", quantity: 1, totalAmount: 100, category: "other" }],
+    });
+    expect(await fileExists(upload.storageKey)).toBe(true);
+
+    const res = await app.request(`/api/orders/${orderId}`, {
+      method: "DELETE",
+      headers: { "x-test-user-id": userId },
+    });
+
+    expect(res.status).toBe(200);
+    expect(await db.query.orders.findFirst({ where: eq(ordersTable.id, orderId) })).toBeUndefined();
+    expect(await db.query.uploads.findFirst({ where: eq(uploads.id, upload.id) })).toBeUndefined();
+    expect(await fileExists(upload.storageKey)).toBe(false);
+  });
+
+  it("returns 404 for another user's order", async () => {
+    const userA = await makeTestUser();
+    const userB = await makeTestUser();
+    const orderId = await makeOrder({
+      userId: userA,
+      platform: "zepto",
+      orderedAt: new Date(),
+      total: 100,
+      items: [{ name: "X", quantity: 1, totalAmount: 100, category: "other" }],
+    });
+
+    const res = await app.request(`/api/orders/${orderId}`, {
+      method: "DELETE",
+      headers: { "x-test-user-id": userB },
+    });
+
     expect(res.status).toBe(404);
   });
 });

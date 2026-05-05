@@ -14,8 +14,7 @@ import {
 import { router } from "expo-router";
 import { useAuthStore } from "@/lib/auth";
 import { T, FONTS } from "@/lib/theme";
-
-const API_BASE = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+import { API_BASE_URL } from "@/lib/api-base-url";
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
@@ -138,14 +137,14 @@ export default function SignInScreen() {
 
       let res: Response;
       try {
-        res = await fetch(`${API_BASE}/api/auth/google`, {
+        res = await fetch(`${API_BASE_URL}/api/auth/google`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken }),
         });
       } catch (err) {
         throw new Error(
-          "Could not reach the app server. Check that the local API is running and the emulator can access it.",
+          `Could not reach the app server at ${API_BASE_URL}. Check your internet connection and that the API is running.`,
         );
       }
 
@@ -160,7 +159,7 @@ export default function SignInScreen() {
       // Route newcomers through onboarding; regulars straight to home.
       let nextRoute: "/(auth)/(tabs)/home" | "/onboarding" = "/(auth)/(tabs)/home";
       try {
-        const meRes = await fetch(`${API_BASE}/api/me`, {
+        const meRes = await fetch(`${API_BASE_URL}/api/me`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (meRes.ok) {
@@ -291,9 +290,9 @@ export default function SignInScreen() {
           }}
         >
           By continuing, you agree to our{" "}
-          <Text style={{ color: T.ink2, textDecorationLine: "underline" }}>Terms</Text>
+          <Text onPress={() => router.push("/terms")} style={{ color: T.ink2, textDecorationLine: "underline" }}>Terms</Text>
           {" "}and{" "}
-          <Text style={{ color: T.ink2, textDecorationLine: "underline" }}>Privacy</Text>.
+          <Text onPress={() => router.push("/privacy")} style={{ color: T.ink2, textDecorationLine: "underline" }}>Privacy</Text>.
         </Text>
       </View>
     </View>

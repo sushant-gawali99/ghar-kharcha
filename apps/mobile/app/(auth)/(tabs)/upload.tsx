@@ -90,6 +90,7 @@ export default function UploadScreen() {
       setUploading(true);
       const formData = new FormData();
       formData.append("file", { uri: file.uri, name: file.name, type: file.mimeType ?? "application/pdf" } as unknown as Blob);
+      formData.append("aiProcessingConsent", "true");
       const res = await authFetch("/api/upload", { method: "POST", body: formData });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
@@ -214,6 +215,9 @@ export default function UploadScreen() {
               </Text>
               <Text style={{ fontFamily: FONTS.sans, fontSize: 13, color: T.ink3, marginTop: 6, textAlign: "center", maxWidth: 240, lineHeight: 18 }}>
                 Tap to browse. Max 10 MB · Single file.
+              </Text>
+              <Text style={{ fontFamily: FONTS.sans, fontSize: 12, color: T.ink3, marginTop: 10, textAlign: "center", maxWidth: 260, lineHeight: 17 }}>
+                Uploading consents to AI processing of invoice text, and sometimes the PDF, for parsing.
               </Text>
               <View style={{
                 marginTop: 18, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999,
