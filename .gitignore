@@ -5,6 +5,10 @@ dist/
 .env.local
 .env.*.local
 *.log
+*.jks
+*.keystore
+apps/mobile/android/*.properties.local
+apps/mobile/android/signing.properties
 
 # Expo
 .expo/

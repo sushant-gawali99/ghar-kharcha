@@ -21,11 +21,23 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.gharkharcha.app"
+      "package": "com.gharkharcha.app",
+      "versionCode": 1
     },
     "plugins": [
       "expo-router",
       "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildToolsVersion": "35.0.0",
+            "compileSdkVersion": 35,
+            "minSdkVersion": 24,
+            "targetSdkVersion": 35
+          }
+        }
+      ],
       [
         "expo-document-picker",
         {

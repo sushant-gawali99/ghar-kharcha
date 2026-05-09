@@ -9,6 +9,7 @@ import { orders } from "./routes/orders";
 import { analytics } from "./routes/analytics";
 import { me } from "./routes/me";
 import { household } from "./routes/household";
+import { legal } from "./routes/legal";
 
 const app = new Hono();
 const configuredOrigins = (process.env.CORS_ORIGINS ?? process.env.ALLOWED_ORIGINS ?? "")
@@ -51,6 +52,7 @@ app.use(
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
+app.route("/", legal);
 app.route("/api/auth", auth);
 app.route("/api/upload", upload);
 app.route("/api/orders", orders);
