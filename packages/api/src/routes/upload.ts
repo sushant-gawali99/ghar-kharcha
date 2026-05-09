@@ -13,14 +13,17 @@ import { logAuditEvent } from "../lib/audit";
 const upload = new Hono<{ Variables: AuthVariables }>();
 
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+const uploadWindowMs = Number(process.env.UPLOAD_RATE_LIMIT_WINDOW_MS ?? 60 * 60 * 1000);
+const uploadMax = Number(process.env.UPLOAD_RATE_LIMIT_MAX ?? 60);
 
 upload.use(authMiddleware);
 upload.use(
   rateLimit({
     keyPrefix: "upload",
-    windowMs: 60 * 60 * 1000,
-    max: 10,
+    windowMs: uploadWindowMs,
+    max: uploadMax,
     key: (c) => String(c.get("userId")),
+    message: "Invoice upload limit reached. Please wait a bit before parsing more invoices.",
   }),
 );
 

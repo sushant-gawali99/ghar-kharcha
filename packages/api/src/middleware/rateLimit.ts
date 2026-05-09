@@ -6,6 +6,7 @@ type RateLimitOptions = {
   max: number;
   keyPrefix: string;
   key?: (c: Context) => string;
+  message?: string;
 };
 
 type Bucket = {
@@ -36,7 +37,7 @@ export function rateLimit(options: RateLimitOptions) {
 
     if (bucket.count >= options.max) {
       c.header("Retry-After", String(Math.ceil((bucket.resetAt - now) / 1000)));
-      return c.json({ error: "Too many requests" }, 429);
+      return c.json({ error: options.message ?? "Too many requests" }, 429);
     }
 
     bucket.count += 1;
